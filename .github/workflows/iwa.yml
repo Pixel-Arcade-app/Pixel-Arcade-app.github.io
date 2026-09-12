@@ -33,6 +33,8 @@ jobs:
         run: python3 iwa-build.py
 
       - name: Load and validate signing key
+        id: validate_key
+        continue-on-error: true
         env:
           IWA_PRIVATE_KEY: ${{ secrets.IWA_PRIVATE_KEY }}
         run: |
@@ -55,6 +57,7 @@ jobs:
           echo "✅ Clé privée lisible et valide."
 
       - name: Build and sign the IWA
+        if: steps.validate_key.outcome == 'success'
         env:
           IWA_PRIVATE_KEY_FILE: ${{ github.workspace }}/iwa-private-key.pem
           IWA_VERSION: 10.7.${{ github.run_number }}
@@ -68,7 +71,12 @@ jobs:
           mkdir -p pages-site
           rsync -a --exclude='.git' --exclude='.github' --exclude='iwa-dist' --exclude='iwa-private-key.pem' --exclude='iwa-private-key.der' --exclude='signed.swbn' --exclude='pages-site' ./ pages-site/
           mkdir -p "pages-site/iwa"
-          cp signed.swbn "pages-site/iwa/pixel-arcade-${IWA_VERSION}.swbn"
+          if [ -f signed.swbn ]; then
+            cp signed.swbn "pages-site/iwa/pixel-arcade-${IWA_VERSION}.swbn"
+            echo "✅ IWA signée incluse dans le site Pages."
+          else
+            echo "⚠️ IWA non signée pour cette exécution : la clé de signature doit encore être corrigée. Le site principal sera quand même publié."
+          fi
           python3 - <<'PY'
           import json, os
           from pathlib import Path
