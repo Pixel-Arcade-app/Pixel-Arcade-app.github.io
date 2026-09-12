@@ -1,4 +1,5 @@
 {
+  "id": "/index.html",
   "name": "Pixel Arcade",
   "short_name": "Pixel Arcade",
   "description": "Pixel Arcade — 31 jeux dans une seule application.",
@@ -9,6 +10,18 @@
   "background_color": "#070a12",
   "theme_color": "#070a12",
   "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icon.svg",
       "sizes": "any",
