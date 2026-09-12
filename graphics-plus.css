@@ -1,6 +1,43 @@
-/* Pixel Arcade 10.1 — habillage graphique des jeux */
-.game{position:relative}.biggame{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px 12px}.biggame canvas{display:block;max-width:100%;height:auto;border:1px solid rgba(120,140,190,.28);border-radius:14px;box-shadow:0 18px 55px rgba(0,0,0,.38),0 0 35px rgba(120,100,255,.10);image-rendering:auto;background:#050914}.biggame canvas{position:relative}.biggame canvas::after{content:""}.biggame .hud{width:min(900px,100%);display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:800;letter-spacing:.2px;padding:10px 14px;border:1px solid rgba(140,155,205,.2);border-radius:12px;background:linear-gradient(180deg,rgba(20,29,55,.95),rgba(8,13,27,.95));box-shadow:0 8px 28px rgba(0,0,0,.22)}.biggame .hud span{padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.045)}.biggame>p{margin:0;text-align:center}.playing .game:fullscreen{display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;padding:18px!important}.playing .game:fullscreen .biggame{width:min(1100px,100%);max-height:100vh;overflow:auto}.game canvas{filter:saturate(1.08) contrast(1.04)}
-/* effet écran rétro discret */
-.biggame::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:16px;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.018) 0,rgba(255,255,255,.018) 1px,transparent 1px,transparent 4px);mix-blend-mode:screen;opacity:.35}
-@media(max-width:700px){.biggame{padding:10px 4px}.biggame .hud{font-size:.82rem}.biggame canvas{border-radius:10px}}
-html[data-pa-theme="light"] .biggame .hud{background:linear-gradient(180deg,#fff,#eef3fa);border-color:#cfd8e6;box-shadow:0 10px 30px rgba(50,70,100,.12)}
+/* Pixel Arcade 10.3 — couleurs, animations et finition arcade */
+
+.game-panel{overflow:hidden}
+.game{position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(circle at 50% 25%,rgba(124,92,255,.13),transparent 34%),radial-gradient(circle at 15% 80%,rgba(0,210,255,.08),transparent 28%),#050914!important}
+.game::before{content:"";position:absolute;inset:-35%;z-index:-2;pointer-events:none;background:conic-gradient(from 0deg,rgba(139,92,246,.13),rgba(0,210,255,.09),rgba(255,70,150,.10),rgba(255,170,0,.08),rgba(139,92,246,.13));filter:blur(55px);animation:paAurora 14s linear infinite}
+.game::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 5px);opacity:.32}
+
+.ready{position:relative;min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;overflow:hidden;background:radial-gradient(circle at 50% 45%,rgba(139,92,246,.20),transparent 32%),radial-gradient(circle at 20% 20%,rgba(0,210,255,.10),transparent 25%),radial-gradient(circle at 80% 75%,rgba(255,90,160,.10),transparent 25%)}
+.ready::before,.ready::after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;border:1px solid rgba(150,120,255,.20);pointer-events:none;animation:paPulse 3.5s ease-in-out infinite}
+.ready::after{width:290px;height:290px;border-color:rgba(0,210,255,.12);animation-delay:1s}
+.ready-icon{font-size:76px;line-height:1;filter:drop-shadow(0 0 18px rgba(255,180,40,.35));animation:paFloat 2.4s ease-in-out infinite;position:relative;z-index:1}
+.ready h2,.ready button{position:relative;z-index:1}
+.ready h2{font-size:2rem;text-shadow:0 0 24px rgba(130,100,255,.35)}
+
+.primary{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.primary:hover{transform:translateY(-3px) scale(1.02);filter:saturate(1.18);box-shadow:0 10px 30px rgba(255,150,40,.25),0 0 24px rgba(255,90,180,.12)}
+.primary:active{transform:translateY(1px) scale(.98)}
+
+.biggame{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px 12px}
+.biggame canvas{display:block;max-width:100%;height:auto;border:2px solid rgba(120,140,190,.34);border-radius:14px;box-shadow:0 18px 55px rgba(0,0,0,.38),0 0 35px rgba(120,100,255,.14),0 0 80px rgba(0,210,255,.05);image-rendering:auto;background:#050914;transition:transform .2s ease,box-shadow .2s ease}
+.biggame canvas:hover{transform:translateY(-2px);box-shadow:0 22px 60px rgba(0,0,0,.42),0 0 42px rgba(120,100,255,.20)}
+.biggame .hud{width:min(900px,100%);display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:800;letter-spacing:.2px;padding:10px 14px;border:1px solid rgba(140,155,205,.25);border-radius:12px;background:linear-gradient(110deg,rgba(27,35,68,.96),rgba(12,18,39,.96));box-shadow:0 8px 28px rgba(0,0,0,.22),0 0 25px rgba(100,100,255,.07)}
+.biggame .hud span{padding:5px 10px;border-radius:8px;background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(120,90,255,.08));border:1px solid rgba(255,255,255,.05)}
+.biggame>p{margin:0;text-align:center}
+
+.info-panel{position:relative;overflow:hidden}
+.info-panel::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(139,92,246,.05),transparent 35%,rgba(0,210,255,.04) 70%,rgba(255,90,160,.05));animation:paShimmer 8s ease-in-out infinite}
+#scores{position:relative}
+#scores>div,#scores .score-row{transition:transform .18s ease,background .18s ease,border-color .18s ease}
+#scores>div:hover,#scores .score-row:hover{transform:translateX(5px);border-color:rgba(139,92,246,.5)!important;background:rgba(139,92,246,.08)!important}
+
+html[data-pa-theme="light"] .game{background:radial-gradient(circle at 50% 20%,rgba(120,90,255,.12),transparent 34%),#f4f7ff!important}
+html[data-pa-theme="light"] .ready{background:radial-gradient(circle at 50% 45%,rgba(120,90,255,.12),transparent 34%),#f4f7ff}
+html[data-pa-theme="light"] .biggame canvas{background:#eef3ff}
+html[data-pa-theme="light"] .biggame .hud{background:linear-gradient(110deg,#fff,#edf2ff);border-color:#cbd5e5;box-shadow:0 10px 30px rgba(50,70,100,.12)}
+
+@keyframes paAurora{0%{transform:rotate(0deg) scale(1)}50%{transform:rotate(180deg) scale(1.08)}100%{transform:rotate(360deg) scale(1)}}
+@keyframes paFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-13px) rotate(2deg)}}
+@keyframes paPulse{0%,100%{transform:scale(.88);opacity:.25}50%{transform:scale(1.08);opacity:.65}}
+@keyframes paShimmer{0%,100%{transform:translateX(-3%);opacity:.55}50%{transform:translateX(3%);opacity:1}}
+
+@media(max-width:700px){.ready{min-height:330px}.ready-icon{font-size:60px}.ready h2{font-size:1.55rem}.biggame{padding:10px 4px}.biggame .hud{font-size:.82rem}.biggame canvas{border-radius:10px}}
+@media(prefers-reduced-motion:reduce){.game::before,.ready::before,.ready::after,.ready-icon,.info-panel::before{animation:none!important}.primary,.biggame canvas{transition:none!important}}
