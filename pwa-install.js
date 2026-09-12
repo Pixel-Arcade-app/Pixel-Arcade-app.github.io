@@ -20,7 +20,7 @@
     const panel=document.createElement('section');
     panel.className='panel';
     panel.style.cssText='margin:24px 0;padding:22px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap';
-    panel.innerHTML='<div><span class="tag">APPLICATION</span><h2 style="margin:8px 0 6px">Pixel Arcade pour Chrome</h2><p class="muted" style="margin:0">Installe Pixel Arcade comme une application, puis ouvre-la directement depuis Chrome.</p></div><button id="paInstallButton" class="primary" type="button">Ouvrir dans l’appli</button>';
+    panel.innerHTML='<div><span class="tag">APPLICATION</span><h2 style="margin:8px 0 6px">Pixel Arcade pour Chrome</h2><p class="muted" style="margin:0">Installe Pixel Arcade comme une application, puis ouvre-la directement depuis Chrome.</p></div><button id="paInstallButton" class="primary" type="button">Installer l’application</button>';
     const hero=main.querySelector('.hero-panel');
     main.insertBefore(panel,hero?hero.nextSibling:main.firstChild);
     panel.querySelector('#paInstallButton').addEventListener('click',async()=>{
