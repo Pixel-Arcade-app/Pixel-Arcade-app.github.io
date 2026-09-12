@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#070a12"><link rel="stylesheet" href="style.css"><link rel="icon" href="icon.svg" type="image/svg+xml"><title>Pixel Quest — Pixel Arcade</title>
+<style>
+#game{position:relative;width:min(1100px,96vw);margin:18px auto 0;padding:0;overflow:hidden;background:#78d9ff;border:3px solid #111827;border-radius:18px;box-shadow:0 18px 60px #0008;min-height:0}
+#game canvas{display:block;width:100%;height:auto;image-rendering:pixelated;touch-action:none}
+.pf-hud{position:absolute;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;z-index:2}.pf-pill{background:#111827e8;color:white;border:2px solid #fff5;border-radius:999px;padding:7px 12px;font-weight:800;text-shadow:2px 2px #0008}.pf-pill b{color:#ffe45c}
+.pf-message{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#111827f2;color:white;border:3px solid white;border-radius:18px;padding:24px;min-width:min(430px,80%);text-align:center;z-index:4;box-shadow:0 14px 50px #0009}.pf-message h2{margin:0 0 8px;color:#ffe45c}.pf-message button{border:0;border-radius:12px;padding:12px 18px;font-weight:900;cursor:pointer;background:#8b5cf6;color:white;font-size:1rem}.pf-hidden{display:none}
+.pf-controls{width:min(1100px,96vw);margin:12px auto;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}.pf-controls button{border:2px solid #334155;background:#111827;color:white;border-radius:12px;padding:10px 18px;font-weight:900;touch-action:none}.pf-note{text-align:center;color:#94a3b8;margin:8px 0 22px}
+@media(max-width:600px){#game{width:100%;border-radius:0}.pf-hud{left:8px;right:8px;top:8px;font-size:.8rem}.pf-pill{padding:5px 8px}.pf-controls button{padding:12px 18px}}
+</style>
+</head>
+<body>
+<header><div><p class="ey">PIXEL ARCADE • GROS JEU</p><h1>PIXEL QUEST</h1><p class="sub">Plateforme rétro coloré • 8 mondes • pièces, ennemis, checkpoints et boss</p></div><div class="head-actions"><span id="accountBox"></span><a class="back" href="./index.html">← Arcade</a></div></header>
+<main>
+<section id="game"><canvas id="pfCanvas" width="960" height="540" aria-label="Pixel Quest"></canvas><div class="pf-hud"><span class="pf-pill">💎 <b id="pfCoins">0</b></span><span class="pf-pill">❤️ <b id="pfLives">3</b></span><span class="pf-pill">🌎 Monde <b id="pfWorld">1/8</b></span></div><div id="pfMessage" class="pf-message"><h2>PIXEL QUEST</h2><p>Traverse 8 mondes, ramasse les pièces et bats le gardien final.</p><p><b>← → / A D</b> pour bouger • <b>Espace / W / ↑</b> pour sauter</p><button id="pfStart">JOUER</button></div></section>
+<div class="pf-controls"><button data-key="left">◀ Gauche</button><button data-key="jump">⬆ Saut</button><button data-key="right">Droite ▶</button></div><p class="pf-note">Astuce : saute sur les ennemis, prends les drapeaux de checkpoint et cherche les pièces cachées.</p>
+</main>
+<footer>Pixel Arcade • Pixel Quest • 8 mondes</footer>
+<script src="config.js"></script><script src="games.js"></script>
+<script>
+(()=>{
+const canvas=document.getElementById('pfCanvas'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+const W=960,H=540,ground=470,worlds=8;let running=false,world=0,score=0,lives=3,coins=0,camera=0,level=null,player=null,last=0,raf=0;
+const keys={left:false,right:false,jump:false};
+const palette=[['#ff6b6b','#ffd93d','#6bcB77','#4d96ff'],['#ff9f1c','#ff4d6d','#2ec4b6','#6c63ff'],['#f72585','#7209b7','#4cc9f0','#80ed99'],['#fb8500','#ffb703','#219ebc','#023047']];
+function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x-camera),Math.round(y),w,h)}
+function makeLevel(n){const rnd=(i)=>Math.sin(i*17.13+n*31.7)*.5+.5;let width=2600+n*380;let platforms=[];let coinsA=[];let enemies=[];let checkpoints=[];
+ platforms.push({x:0,y:ground,w:width,h:70});
+ let x=260;let i=0;while(x<width-350){let gap=35+Math.floor(rnd(i)*55);let pw=100+Math.floor(rnd(i+3)*170);let py=360-Math.floor(rnd(i+5)*110);platforms.push({x,y:py,w:pw,h:22});if(i%2===0)coinsA.push({x:x+pw*.5,y:py-28,t:0});if(i%3===0)enemies.push({x:x+pw*.65,y:py-34,w:30,h:30,vx:(rnd(i+9)>.5?45:-45),base:x+10,max:x+pw-40});if(i%5===1)checkpoints.push({x:x+pw*.5,y:py-70,active:false});x+=pw+gap;i++}
+ for(let j=0;j<10+n*2;j++){let cx=180+j*((width-360)/(9+n*2));coinsA.push({x:cx,y:ground-40-(j%3)*38,t:0})}
+ const goal={x:width-160,y:ground-95,w:40,h:95};let boss=n===7?{x:width-430,y:ground-76,w:64,h:76,vx:55,hp:10,shot:0}:null;return {width,platforms,coins:coinsA,enemies,checkpoints,goal,boss};}
+function resetPlayer(x=70,y=400){player={x,y,w:30,h:42,vx:0,vy:0,on:false,spawnX:x,spawnY:y,inv:0}}
+function startGame(){cancelAnimationFrame(raf);world=0;score=0;lives=3;coins=0;loadWorld();running=true;document.getElementById('pfMessage').classList.add('pf-hidden');last=performance.now();raf=requestAnimationFrame(loop);window.enterGameFullscreen?.()}
+function loadWorld(){level=makeLevel(world);resetPlayer();camera=0;updateHud()}
+function updateHud(){document.getElementById('pfCoins').textContent=coins;document.getElementById('pfLives').textContent=lives;document.getElementById('pfWorld').textContent=(world+1)+'/'+worlds}
+function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function die(){if(player.inv>0)return;lives--;updateHud();if(lives<=0)return finish(false);resetPlayer(player.spawnX,player.spawnY);player.inv=1.4}
+function finish(win){running=false;cancelAnimationFrame(raf);let final=Math.max(0,score+coins*25+(win?5000:0));try{window.score('platformer',final,1)}catch{}const m=document.getElementById('pfMessage');m.classList.remove('pf-hidden');m.innerHTML=win?`<h2>🏆 PIXEL QUEST TERMINÉ !</h2><p>Tu as traversé les 8 mondes !</p><p><b>Score : ${final}</b> • 💎 ${coins} pièces</p><button id="pfRestart">REJOUER</button>`:`<h2>💥 GAME OVER</h2><p>Tu es arrivé jusqu'au monde ${world+1}.</p><p><b>Score : ${final}</b> • 💎 ${coins} pièces</p><button id="pfRestart">RECOMMENCER</button>`;document.getElementById('pfRestart').onclick=startGame}
+function nextWorld(){score+=1000;world++;if(world>=worlds)return finish(true);loadWorld()}
+function update(dt){
+ if(!running)return;const speed=260;player.vx=(keys.right?speed:0)-(keys.left?speed:0);if(keys.jump&&player.on){player.vy=-590;player.on=false}keys.jump=false;player.vy+=1450*dt;player.x+=player.vx*dt;player.y+=player.vy*dt;player.on=false;
+ for(const p of level.platforms){if(player.x+player.w>p.x&&player.x<p.x+p.w&&player.y+player.h>=p.y&&player.y+player.h<=p.y+24&&player.vy>=0){player.y=p.y-player.h;player.vy=0;player.on=true}}
+ player.x=Math.max(0,Math.min(level.width-player.w,player.x));if(player.y>H+100){die();return}
+ for(const c of level.coins){c.t+=dt;if(!c.got&&Math.abs((player.x+15)-c.x)<25&&Math.abs((player.y+20)-c.y)<30){c.got=true;coins++;score+=100}}
+ for(const cp of level.checkpoints){if(!cp.active&&player.x>cp.x){cp.active=true;player.spawnX=cp.x;player.spawnY=cp.y;score+=250}}
+ for(const e of level.enemies){if(!e.dead){e.x+=e.vx*dt;if(e.x<e.base||e.x>e.max)e.vx*=-1;if(hit(player,e)){if(player.vy>120&&player.y+player.h-e.y<18){e.dead=true;player.vy=-400;score+=300}else die()}}}
+ if(level.boss&&!level.boss.dead){let b=level.boss;b.x+=b.vx*dt;if(b.x<level.width-650||b.x>level.width-230)b.vx*=-1;b.shot+=dt;if(hit(player,b)){if(player.vy>100&&player.y+player.h-b.y<22){b.hp--;player.vy=-470;score+=500;if(b.hp<=0){b.dead=true;score+=3000}}else die()}}
+ if(player.x>level.goal.x-20){if(!level.boss||level.boss.dead)nextWorld()}
+ camera+=(player.x-camera-330)*Math.min(1,dt*5);camera=Math.max(0,Math.min(level.width-W,camera));if(player.inv>0)player.inv-=dt;updateHud()
+}
+function draw(){const pal=palette[world%palette.length];let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,pal[3]);g.addColorStop(1,'#d9f99d');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ // parallax clouds and hills
+ ctx.fillStyle='#ffffff55';for(let i=0;i<9;i++){let x=(i*180-(camera*.18)%180);ctx.beginPath();ctx.arc(x,100+(i%3)*35,28,0,7);ctx.arc(x+30,95+(i%3)*35,38,0,7);ctx.arc(x+65,105+(i%3)*35,24,0,7);ctx.fill()}
+ ctx.fillStyle='#4ade8055';for(let i=0;i<9;i++){let x=i*180-(camera*.3%180);ctx.beginPath();ctx.arc(x,ground+40,150,Math.PI,Math.PI*2);ctx.fill()}
+ for(const p of level.platforms){rect(p.x,p.y,p.w,p.h,'#7c3aed');rect(p.x,p.y,p.w,7,'#facc15');for(let bx=p.x;bx<p.x+p.w;bx+=32)rect(bx,p.y+9,28,9,'#a78bfa')}
+ for(const cp of level.checkpoints){rect(cp.x,cp.y,7,70,'#f8fafc');rect(cp.x+7,cp.y,30,18,cp.active?'#22c55e':'#f43f5e')}
+ for(const c of level.coins){if(!c.got){ctx.fillStyle='#ffe45c';ctx.beginPath();ctx.arc(c.x-camera,c.y,10+Math.sin(c.t*7)*2,0,7);ctx.fill();ctx.fillStyle='#fff7';ctx.fillRect(c.x-camera-2,c.y-6,4,12)}}
+ for(const e of level.enemies){if(!e.dead){rect(e.x,e.y,e.w,e.h,'#ef476f');rect(e.x+5,e.y+7,7,7,'white');rect(e.x+19,e.y+7,7,7,'white');rect(e.x+7,e.y+10,3,3,'#111');rect(e.x+21,e.y+10,3,3,'#111');rect(e.x+4,e.y+25,22,5,'#7f1d1d')}}
+ if(level.boss&&!level.boss.dead){const b=level.boss;rect(b.x,b.y,b.w,b.h,'#7c2d12');rect(b.x+8,b.y+12,48,42,'#f97316');rect(b.x+15,b.y+22,10,10,'#fff');rect(b.x+40,b.y+22,10,10,'#fff');rect(b.x+18,b.y+42,30,7,'#111');rect(b.x,b.y-14,64,7,'#111');rect(b.x,b.y-14,64*(b.hp/10),7,'#22c55e')}
+ rect(level.goal.x,level.goal.y,7,95,'#f8fafc');rect(level.goal.x+7,level.goal.y,40,22,'#facc15');rect(level.goal.x+7,level.goal.y+22,40,22,'#f43f5e');
+ if(!player.inv||Math.floor(player.inv*12)%2===0){rect(player.x,player.y,player.w,player.h,'#2563eb');rect(player.x+4,player.y+3,22,17,'#fcd34d');rect(player.x+7,player.y+7,5,5,'#111');rect(player.x+19,player.y+7,5,5,'#111');rect(player.x+3,player.y+27,24,15,'#1d4ed8')}
+}
+function loop(t){const dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();if(running)raf=requestAnimationFrame(loop)}
+document.getElementById('pfStart').onclick=startGame;
+window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp',' ','a','d','w','A','D','W'].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')keys.left=true;if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')keys.right=true;if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'||e.key===' ')keys.jump=true;if(!running&&e.key==='Enter')startGame()});window.addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')keys.left=false;if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')keys.right=false});
+document.querySelectorAll('.pf-controls button').forEach(b=>{const k=b.dataset.key;const on=e=>{e.preventDefault();if(k==='left')keys.left=true;if(k==='right')keys.right=true;if(k==='jump')keys.jump=true};const off=e=>{e.preventDefault();if(k==='left')keys.left=false;if(k==='right')keys.right=false};b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off)});
+level=makeLevel(0);resetPlayer();draw();
+})();
+</script>
+</body></html>
