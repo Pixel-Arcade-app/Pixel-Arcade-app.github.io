@@ -1,14 +1,14 @@
-/* Pixel Arcade 10.6 — contrôle plein écran sans masquer le HUD */
+/* Pixel Arcade 10.7 — contrôle plein écran sans masquer le HUD */
 .game-description{margin:22px 0!important;padding:26px 28px!important;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(116,129,255,.12),rgba(255,99,125,.08))!important}
 .game-description:before{content:'';position:absolute;width:180px;height:180px;right:-70px;top:-90px;border-radius:50%;background:rgba(116,129,255,.13);filter:blur(4px);pointer-events:none}
 .game-description h2{margin:7px 0 5px;font-size:1.25rem}
 .game-description p{margin:0;color:var(--muted,#aab6d6);line-height:1.6;font-size:1rem}
 #game{position:relative}
-.pa-fullscreen-btn{position:absolute;right:16px;top:16px;z-index:50;border:1px solid rgba(116,129,255,.55);background:rgba(8,12,25,.88);color:#fff;border-radius:12px;padding:10px 14px;font:600 14px system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3);backdrop-filter:blur(8px);transition:transform .18s,box-shadow .18s,border-color .18s}
+.pa-fullscreen-btn{position:absolute!important;right:16px!important;left:auto!important;top:16px!important;bottom:auto!important;z-index:50!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:max-content!important;min-width:0!important;max-width:calc(100vw - 28px)!important;height:auto!important;min-height:0!important;max-height:52px!important;box-sizing:border-box!important;flex:0 0 auto!important;align-self:auto!important;justify-self:auto!important;white-space:nowrap!important;writing-mode:horizontal-tb!important;resize:none!important;border:1px solid rgba(116,129,255,.55);background:rgba(8,12,25,.88);color:#fff;border-radius:12px;padding:10px 14px;font:600 14px system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3);backdrop-filter:blur(8px);transition:transform .18s,box-shadow .18s,border-color .18s}
 .pa-fullscreen-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.4);border-color:#7481ff}
 .pa-fullscreen-btn:active{transform:translateY(0) scale(.97)}
-/* En plein écran, le bouton quitte la zone du HUD supérieur et passe en bas à droite. */
-#game:fullscreen .pa-fullscreen-btn{position:fixed;right:24px;top:auto;bottom:24px;z-index:2147483647}
-@media(max-width:700px){.game-description{padding:20px!important}.pa-fullscreen-btn{right:10px;top:10px;padding:9px 11px;font-size:13px}#game:fullscreen .pa-fullscreen-btn{right:14px;bottom:14px}}
+/* En plein écran, le bouton reste petit et passe en bas à droite. */
+#game:fullscreen .pa-fullscreen-btn{position:fixed!important;right:24px!important;left:auto!important;top:auto!important;bottom:24px!important;width:max-content!important;min-width:0!important;max-width:calc(100vw - 48px)!important;height:auto!important;min-height:0!important;max-height:52px!important;display:inline-flex!important;z-index:2147483647!important}
+@media(max-width:700px){.game-description{padding:20px!important}.pa-fullscreen-btn{right:10px!important;top:10px!important;padding:9px 11px;font-size:13px;max-width:calc(100vw - 20px)!important}.pa-fullscreen-btn{max-height:48px!important}#game:fullscreen .pa-fullscreen-btn{right:14px!important;bottom:14px!important;max-width:calc(100vw - 28px)!important;max-height:48px!important}}
 body.light .game-description{background:linear-gradient(135deg,rgba(90,105,230,.09),rgba(230,80,105,.06))!important}
 body.light .pa-fullscreen-btn{background:rgba(255,255,255,.92);color:#17203a;border-color:rgba(70,85,180,.35)}
