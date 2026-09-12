@@ -32,23 +32,29 @@ jobs:
       - name: Prepare IWA files
         run: python3 iwa-build.py
 
-      - name: Load signing key
+      - name: Load and validate signing key
         env:
           IWA_PRIVATE_KEY: ${{ secrets.IWA_PRIVATE_KEY }}
         run: |
-          test -n "$IWA_PRIVATE_KEY" || { echo "Le secret IWA_PRIVATE_KEY est manquant."; exit 1; }
-          printf '%s\n' "$IWA_PRIVATE_KEY" > iwa-private-key.pem
+          test -n "$IWA_PRIVATE_KEY" || { echo "❌ Le secret IWA_PRIVATE_KEY est manquant."; exit 1; }
+          # GitHub Secrets normally preserve line breaks, but accept literal \n too.
+          printf '%s' "$IWA_PRIVATE_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > iwa-private-key.pem
           chmod 600 iwa-private-key.pem
+          echo "Validation de la clé privée…"
+          openssl pkey -in iwa-private-key.pem -noout
+          KEY_TYPE="$(openssl pkey -in iwa-private-key.pem -text -noout 2>/dev/null | head -n 1 || true)"
+          echo "Type détecté: $KEY_TYPE"
+          openssl pkey -in iwa-private-key.pem -pubout -out /dev/null
 
       - name: Build and sign the IWA
         env:
           IWA_PRIVATE_KEY_FILE: ${{ github.workspace }}/iwa-private-key.pem
-          IWA_VERSION: 10.6.${{ github.run_number }}
+          IWA_VERSION: 10.7.${{ github.run_number }}
         run: node iwa-sign.mjs iwa-dist signed.swbn
 
       - name: Prepare GitHub Pages site
         env:
-          IWA_VERSION: 10.6.${{ github.run_number }}
+          IWA_VERSION: 10.7.${{ github.run_number }}
         run: |
           rm -rf pages-site
           mkdir -p pages-site
