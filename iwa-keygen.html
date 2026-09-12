@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pixel Arcade — clé IWA</title>
+  <style>
+    body{font-family:system-ui,sans-serif;background:#070a12;color:#fff;max-width:760px;margin:0 auto;padding:32px;line-height:1.55}
+    .box{background:#111827;border:1px solid #26314d;border-radius:18px;padding:24px}
+    button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}
+    pre{white-space:pre-wrap;word-break:break-word;background:#05070d;padding:14px;border-radius:12px}
+    .warn{color:#ffd166}.ok{color:#7ee787}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>🔐 Clé de signature Pixel Arcade IWA</h1>
+    <p>Cette page génère une clé privée Ed25519 directement dans ton navigateur. La clé privée ne doit jamais être publiée dans le dépôt GitHub.</p>
+    <button id="generate">Générer une nouvelle clé</button>
+    <p id="status" class="warn"></p>
+    <div id="result" hidden>
+      <p class="ok">Clé générée. Télécharge le fichier puis ajoute son contenu comme secret GitHub nommé <b>IWA_PRIVATE_KEY</b>.</p>
+      <button id="download">Télécharger private_key.pem</button>
+      <pre id="public"></pre>
+      <p><b>Important :</b> garde ce fichier privé et conserve exactement cette même clé pour toutes les futures mises à jour de l'IWA.</p>
+    </div>
+  </div>
+  <script>
+    const $=s=>document.querySelector(s);
+    let pem='';
+    function b64(buf){let s='';const a=new Uint8Array(buf);for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode(...a.subarray(i,i+0x8000));return btoa(s)}
+    function pemWrap(type,data){const x=b64(data),lines=x.match(/.{1,64}/g)||[];return `-----BEGIN ${type}-----\n${lines.join('\n')}\n-----END ${type}-----\n`}
+    $('#generate').onclick=async()=>{
+      $('#status').textContent='Génération…';
+      $('#result').hidden=true;
+      try{
+        if(!crypto?.subtle)throw new Error('Web Crypto n’est pas disponible.');
+        const kp=await crypto.subtle.generateKey({name:'Ed25519'},true,['sign','verify']);
+        const priv=await crypto.subtle.exportKey('pkcs8',kp.privateKey);
+        const pub=await crypto.subtle.exportKey('raw',kp.publicKey);
+        pem=pemWrap('PRIVATE KEY',priv);
+        $('#public').textContent='Clé publique (information uniquement) :\n'+b64(pub);
+        $('#result').hidden=false;
+        $('#status').textContent='';
+      }catch(e){$('#status').textContent='Impossible de générer la clé dans ce navigateur : '+e.message}
+    };
+    $('#download').onclick=()=>{
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([pem],{type:'application/x-pem-file'}));
+      a.download='private_key.pem';a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    };
+  </script>
+</body>
+</html>
