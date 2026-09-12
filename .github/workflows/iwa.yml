@@ -92,7 +92,7 @@ jobs:
           }
           (root/'.well-known/updates.json').write_text(json.dumps(updates,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           PY
-          rm -f pages-site/iwa-keygen.html pages-site/iwa-build.py pages-site/iwa-sign.mjs
+          rm -f pages-site/iwa-build.py pages-site/iwa-sign.mjs
           rm -rf pages-site/iwa-dist
           rm -f iwa-private-key.pem iwa-private-key.der
 
