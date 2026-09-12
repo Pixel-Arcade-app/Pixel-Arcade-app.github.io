@@ -1,0 +1,50 @@
+PIXEL ARCADE 9.0 — CONFIGURATION SUPABASE
+
+1) Crée un projet Supabase Cloud.
+2) Authentication > Providers > Email : désactive "Confirm email". Pixel Arcade utilise pseudo + mot de passe avec une adresse technique interne.
+3) SQL Editor : exécute tout le SQL ci-dessous.
+4) Dans config.js, remplis supabaseUrl et supabaseAnonKey avec l'URL et la clé anon/publishable du projet. Ne mets JAMAIS service_role.
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  pseudo text not null unique,
+  xp bigint not null default 0,
+  games_played bigint not null default 0,
+  total_score bigint not null default 0,
+  achievements jsonb not null default '[]'::jsonb,
+  favorites jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table public.scores add column if not exists user_id uuid references auth.users(id) on delete set null;
+create index if not exists scores_game_score_idx on public.scores(game, score desc);
+create index if not exists scores_user_idx on public.scores(user_id);
+create index if not exists profiles_pseudo_idx on public.profiles(pseudo);
+
+alter table public.profiles enable row level security;
+alter table public.scores enable row level security;
+
+drop policy if exists profiles_select_own on public.profiles;
+drop policy if exists profiles_update_own on public.profiles;
+drop policy if exists scores_read on public.scores;
+drop policy if exists scores_insert on public.scores;
+
+create policy profiles_select_own on public.profiles for select to authenticated using (auth.uid() = id);
+create policy profiles_update_own on public.profiles for update to authenticated using (auth.uid() = id) with check (auth.uid() = id);
+create policy scores_read on public.scores for select to anon, authenticated using (true);
+create policy scores_insert on public.scores for insert to anon, authenticated with check (user_id is null or auth.uid() = user_id);
+
+create or replace function public.handle_new_pixel_arcade_user()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+begin
+  insert into public.profiles(id, pseudo)
+  values (new.id, coalesce(new.raw_user_meta_data->>'pseudo', split_part(new.email, '@', 1)));
+  return new;
+end;
+$$;
+
+drop trigger if exists on_pixel_arcade_user_created on auth.users;
+create trigger on_pixel_arcade_user_created after insert on auth.users for each row execute procedure public.handle_new_pixel_arcade_user();
+
+Le compte utilise Supabase Auth : les mots de passe ne sont pas stockés par Pixel Arcade. Les scores d'un compte connecté sont enregistrés avec son user_id. Les scores réalisés sans compte ou hors connexion sont conservés localement puis synchronisés dès qu'Internet revient.
