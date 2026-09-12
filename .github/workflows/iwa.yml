@@ -32,6 +32,21 @@ jobs:
       - name: Prepare IWA files
         run: python3 iwa-build.py
 
+      - name: Synchronize site version in IWA files
+        env:
+          IWA_VERSION: 10.7.${{ github.run_number }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          version=os.environ['IWA_VERSION']
+          path=Path('iwa-dist/config.js')
+          text=path.read_text(encoding='utf-8')
+          text=re.sub(r'window\.PIXEL_ARCADE_VERSION="[^"]*";', f'window.PIXEL_ARCADE_VERSION="{version}";', text, count=1)
+          path.write_text(text,encoding='utf-8')
+          print(f'Version IWA: {version}')
+          PY
+
       - name: Load and validate signing key
         id: validate_key
         continue-on-error: true
@@ -78,10 +93,17 @@ jobs:
             echo "IWA non signée pour cette exécution : le site principal sera quand même publié."
           fi
           python3 - <<'PY'
-          import json, os
+          import json, os, re
           from pathlib import Path
           root=Path('pages-site')
           version=os.environ['IWA_VERSION']
+
+          # Une seule version publique : le site affiche exactement la même version que l'IWA.
+          config_path=root/'config.js'
+          config_text=config_path.read_text(encoding='utf-8')
+          config_text=re.sub(r'window\.PIXEL_ARCADE_VERSION="[^"]*";', f'window.PIXEL_ARCADE_VERSION="{version}";', config_text, count=1)
+          config_path.write_text(config_text,encoding='utf-8')
+
           manifest_path=root/'.well-known/manifest.webmanifest'
           manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
           manifest['version']=version
@@ -91,6 +113,7 @@ jobs:
             'channels':{'default':{'name':'Stable'}}
           }
           (root/'.well-known/updates.json').write_text(json.dumps(updates,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(f'Version publique: {version}')
           PY
           rm -f pages-site/iwa-build.py pages-site/iwa-sign.mjs
           rm -rf pages-site/iwa-dist
