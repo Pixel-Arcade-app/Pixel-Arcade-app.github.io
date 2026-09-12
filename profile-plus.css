@@ -1,0 +1,7 @@
+/* Pixel Arcade 9.3 */
+:root{--pa-accent:#8b5cf6;--pa-accent-2:#c084fc}
+html[data-pa-theme="light"] body{background:#f4f7fb;color:#111827}html[data-pa-theme="light"] .panel,html[data-pa-theme="light"] .card{background:#fff;color:#111827;border-color:#dbe2ea}html[data-pa-theme="light"] .muted{color:#5b6472}
+html[data-pa-theme="light"] body:after{color:#6b7280!important}
+button.primary,.primary{background:linear-gradient(135deg,var(--pa-accent),var(--pa-accent-2))!important}
+.account-chip{border-color:var(--pa-accent)!important}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.settings-panel label{display:block;margin:12px 0}.settings-panel input,.settings-panel select{display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:12px;border-radius:10px;border:1px solid #374151;background:#0c1220;color:inherit}.score-list{display:grid;gap:8px}.score-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 14px;border-radius:10px;background:rgba(127,127,127,.10);border:1px solid rgba(127,127,127,.16)}.score-row strong{color:var(--pa-accent-2);font-size:1.05rem}.secondary{margin-top:8px;padding:11px 15px;border-radius:10px;border:1px solid var(--pa-accent);background:transparent;color:inherit;cursor:pointer}.xpbar{height:9px;background:rgba(127,127,127,.2);border-radius:99px;overflow:hidden;margin-top:18px}.xpbar>div{height:100%;background:linear-gradient(90deg,var(--pa-accent),var(--pa-accent-2));border-radius:99px}@media(max-width:700px){.settings-grid{grid-template-columns:1fr}}
