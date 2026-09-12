@@ -1,3 +1,26 @@
-/* v9.0 final UI overrides */
-body:not(.playing)::after{content:'Pixel Arcade • version 9.0'!important}
+/* Pixel Arcade 9.8 — thèmes globaux et couleurs */
+body:not(.playing)::after{content:'Pixel Arcade • version 9.8'!important}
+:root[data-pa-palette="violet"]{--a:#8b5cf6;--pa-accent:#8b5cf6;--pa-accent-2:#c084fc}
+:root[data-pa-palette="blue"]{--a:#38bdf8;--pa-accent:#38bdf8;--pa-accent-2:#60a5fa}
+:root[data-pa-palette="green"]{--a:#22c55e;--pa-accent:#22c55e;--pa-accent-2:#84cc16}
+:root[data-pa-palette="red"]{--a:#f43f5e;--pa-accent:#f43f5e;--pa-accent-2:#fb7185}
+:root[data-pa-palette="orange"]{--a:#f97316;--pa-accent:#f97316;--pa-accent-2:#facc15}
+:root[data-pa-palette="pink"]{--a:#ec4899;--pa-accent:#ec4899;--pa-accent-2:#f472b6}
+html[data-pa-theme="light"] body{background:linear-gradient(180deg,#f8faff,#eef2f8)!important;color:#111827!important}
+html[data-pa-theme="light"] header{background:#fff!important;color:#111827!important}
+html[data-pa-theme="light"] .panel{background:#fff!important;color:#111827!important;border-color:#cbd5e1!important}
+html[data-pa-theme="light"] .stat,html[data-pa-theme="light"] .achievement,html[data-pa-theme="light"] .score-row{background:#f1f5f9!important;color:#111827!important;border-color:#cbd5e1!important}
+html[data-pa-theme="light"] .stat b,html[data-pa-theme="light"] .achievement b{color:#111827!important}
+html[data-pa-theme="light"] .settings-panel input,html[data-pa-theme="light"] .settings-panel select{background:#fff!important;color:#111827!important;border-color:#cbd5e1!important}
+html[data-pa-theme="light"] .settings-panel input::placeholder{color:#64748b!important}
+html[data-pa-theme="light"] .palette-choice{background:#f8fafc!important;color:#111827!important;border-color:#cbd5e1!important}
+html[data-pa-theme="light"] .palette-choice.selected{border-color:var(--pa-accent)!important}
+html[data-pa-theme="light"] .secondary{color:#111827!important;background:#fff!important}
+html[data-pa-theme="light"] .profile-hero{background:linear-gradient(135deg,#e7ebff,#fff)!important;color:#111827!important}
+html[data-pa-theme="light"] .profile-hero .muted{color:#475569!important}
+html[data-pa-theme="light"] .xpbar{background:#dbe3ed!important}
+html[data-pa-theme="light"] .tag{color:#475569!important}
+button.primary,.primary{background:linear-gradient(135deg,var(--pa-accent),var(--pa-accent-2))!important;border-color:var(--pa-accent)!important}
+.filter.active{background:var(--a)!important;border-color:var(--a)!important}
+.account-chip{border-color:var(--pa-accent)!important}
 .playing .game:fullscreen{width:100vw!important;height:100vh!important;min-height:100vh!important;max-width:none!important;background:#050912!important;margin:0!important;border-radius:0!important;overflow:auto!important}
