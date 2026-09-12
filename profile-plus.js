@@ -1,4 +1,4 @@
-/* Pixel Arcade 9.3 — options du profil + historique des scores + thèmes. */
+/* Pixel Arcade 9.4 — options du profil + historique des scores + thèmes. */
 (()=>{
   const palettes={violet:['#8b5cf6','#c084fc'],blue:['#38bdf8','#60a5fa'],green:['#22c55e','#84cc16'],red:['#f43f5e','#fb7185'],orange:['#f97316','#facc15'],pink:['#ec4899','#f472b6']};
   const cfg=window.PIXEL_ARCADE_CONFIG||{};const URL=String(cfg.supabaseUrl||'').replace(/\/$/,''),KEY=cfg.supabaseAnonKey||'';
@@ -20,5 +20,8 @@
     document.getElementById('savePseudo').onclick=async()=>{const msg=document.getElementById('pseudoMsg');const b=document.getElementById('savePseudo');try{b.disabled=true;msg.textContent='';await savePseudo(document.getElementById('newPseudo').value);msg.textContent='✓ Pseudo modifié !';window.dispatchEvent(new Event('pa-auth-updated'))}catch(e){msg.textContent='⚠️ '+e.message}finally{b.disabled=false}};
   }
   applyTheme();window.PAProfilePlus={render,applyTheme};
-  window.addEventListener('pa-auth-ready',()=>setTimeout(render,50));window.addEventListener('pa-auth-updated',()=>{applyTheme();if(document.getElementById('profilePage'))setTimeout(render,80)});
+  window.addEventListener('pa-auth-ready',()=>setTimeout(render,50));
+  window.addEventListener('pa-auth-updated',()=>{applyTheme();if(document.getElementById('profilePage'))setTimeout(render,80)});
+  window.addEventListener('pa-profile-rendered',()=>{if(document.getElementById('profilePage'))setTimeout(render,20)});
+  if(document.getElementById('profilePage'))setTimeout(render,300);
 })();
