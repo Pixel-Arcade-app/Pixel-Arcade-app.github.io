@@ -1,14 +1,16 @@
 {
   "name": "Pixel Arcade",
   "short_name": "Pixel Arcade",
-  "start_url": "./index.html",
-  "scope": "./",
+  "description": "Pixel Arcade — 31 jeux dans une seule application.",
+  "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#070a12",
   "theme_color": "#070a12",
   "icons": [
     {
-      "src": "./icon.svg",
+      "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
