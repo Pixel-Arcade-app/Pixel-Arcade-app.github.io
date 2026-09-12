@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as wbn from 'wbn';
 import * as wbnSign from 'wbn-sign';
 
@@ -28,7 +27,8 @@ const mime = {
 const csp = "base-uri 'none'; default-src 'self'; object-src 'none'; frame-src 'self' https: blob: data:; connect-src 'self' https: wss: blob: data:; script-src 'self' 'wasm-unsafe-eval'; img-src 'self' https: blob: data:; media-src 'self' https: blob: data:; font-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; require-trusted-types-for 'script'; frame-ancestors 'self';";
 const builder = new wbn.BundleBuilder('b2');
 builder.setPrimaryURL(primary);
-builder.setManifestURL(origin + '.well-known/manifest.webmanifest');
+// Le format Web Bundle b2 ne possède pas de section manifest séparée.
+// Le manifest est néanmoins inclus comme échange .well-known/manifest.webmanifest ci-dessous.
 
 function walk(dir) {
   const out=[];
