@@ -1,3 +1,3 @@
 /* Mets ici ton projet Supabase Cloud. Ne mets JAMAIS la clé service_role. */
-window.PIXEL_ARCADE_CONFIG={supabaseUrl:"https://oztpipdiymcbqnvdlkfs.supabase.co",supabaseAnonKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96dHBpd2M0cW52ZGxrZnMiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4OTE5NTQ5NSwiZXhwIjoyMTA0NzcxNDk1fQ.MrF4dnFPnejHtxGnBGwtfeqD8c-57vzX14Da6S0Eod4"};
+window.PIXEL_ARCADE_CONFIG={supabaseUrl:"https://oztpipdiymcbqnvdlkfs.supabase.co",supabaseAnonKey:"sb_publishable_dMPMLOczi3OJm7Nb1DkT6g_nVgpAZxO"};
 if(location.protocol!=='file:'&&!window.PA_DOWNLOAD_MODE){window.addEventListener('load',()=>{for(const href of ['v9.css?v=9.0','v9-fix.css?v=9.0']){const css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.appendChild(css)}for(const src of ['auth.js?v=9.0','auth-fix.js?v=9.0','v9.js?v=9.0','presence.js?v=9.0']){const s=document.createElement('script');s.src=src;s.async=false;document.body.appendChild(s)}})}
