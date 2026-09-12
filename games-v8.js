@@ -1,0 +1,274 @@
+/* Supabase local : aucun CDN. */
+window.addEventListener("error",e=>{console.error(e.error||e.message);const g=document.getElementById("game");if(g)g.innerHTML="<div style=\"padding:30px;text-align:center\"><h2>Erreur JavaScript</h2><p class=\"error\">"+String(e.message).replace(/[&<>]/g,"")+" </p></div>"});
+const SUPABASE_URL="http://127.0.0.1:54321";
+const SUPABASE_ANON_KEY="REMPLACE_PAR_TA_CLE_ANON_LOCALE";
+let supa=false, raf=0, timers=[], gameSession=0;
+const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function clearGame(){gameSession++;cancelAnimationFrame(raf);raf=0;timers.forEach(clearTimeout);timers=[];document.querySelectorAll(".pop").forEach(x=>x.remove());window.onkeydown=null;window.onkeyup=null;window.onpointerdown=null}
+function timer(fn,ms){const session=gameSession;let t=setTimeout(()=>{if(session!==gameSession)return;fn()},ms);timers.push(t);return t}
+function title(t){$("title").textContent=t}function box(s){$("game").innerHTML=s}
+async function api(path,opt={}){let h={"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json",...(opt.headers||{})};let r=await fetch(SUPABASE_URL+"/rest/v1/"+path,{...opt,headers:h});let txt=await r.text();if(!r.ok)throw Error(txt||r.statusText);return txt?JSON.parse(txt):null}
+async function initSupa(){try{if(!$("connection"))return;if(SUPABASE_ANON_KEY.startsWith("REMPLACE"))throw Error("Clé anon locale manquante");await api("scores?select=id&limit=1");supa=true;$("connection").textContent="Supabase local : actif";$("dot").style.background="var(--good)";loadScores()}catch(e){$("connection").textContent="Supabase local : non connecté";$("dot").style.background="var(--bad)";$("scores").innerHTML='<p class="error">'+esc(e.message)+'</p><p class="muted">Lance <b>supabase start</b>, puis <b>supabase status</b> et mets la clé anon dans ce fichier.</p>'}}
+let finishShown=false;
+const GAME_DESC={
+ runner:"Cours le plus longtemps possible et saute les obstacles sans les toucher.",
+ memory:"Retourne les cartes deux par deux et retrouve toutes les paires avec le moins de coups possible.",
+ meteor:"Déplace ton vaisseau et évite les météores. Plus tu tiens longtemps, plus le score monte.",
+ snake:"Mange les fruits, grandis et évite les murs ainsi que ton propre corps.",
+ breakout:"Utilise la raquette pour renvoyer la balle et détruire toutes les briques.",
+ flappy:"Fais voler ton personnage entre les tuyaux sans les toucher et bats ton meilleur score.",
+ reaction:"Teste tes réflexes : attends le signal vert puis clique le plus vite possible.",
+ quiz:"Réponds à une série de questions et accumule des points pour chaque bonne réponse.",
+ clicker:"Clique sur le noyau, achète des améliorations, automatise la production et construis ton empire d’énergie.",
+ pong:"Duel classique à deux : J1 utilise W/S et J2 utilise les flèches. Le premier à 7 gagne.",
+ ttt:"À deux, place ton symbole sur la grille et aligne trois cases avant ton adversaire.",
+ draw:"Attendez le signal vert : F pour J1 et J pour J2. Le plus rapide gagne.",
+ tap:"Deux joueurs poussent une barre avec leurs touches. Le premier qui atteint l’extrémité gagne.",
+ rps:"Jouez plusieurs manches de pierre-papier-ciseaux et soyez le premier à gagner trois manches.",
+ lights:"Une cible apparaît pour F ou J. Appuie sur la bonne touche avant l’autre joueur, jusqu’à 7 points.",
+ dots:"Les joueurs capturent les 25 cases à tour de rôle. Celui qui en possède le plus gagne.",
+ math:"Deux joueurs résolvent des multiplications. Le premier à 5 bonnes réponses gagne."
+};
+function localScores(){try{return JSON.parse(localStorage.getItem("pixelArcadeScores")||"[]")}catch(e){return []}}
+function saveLocalScore(game,points,players,pseudo){let a=localScores();a.unshift({game,score:Math.round(points),players,pseudo,created_at:new Date().toISOString()});a=a.slice(0,100);try{localStorage.setItem("pixelArcadeScores",JSON.stringify(a));localStorage.setItem("pixelArcadePseudo",pseudo)}catch(e){}}
+async function score(game,points,players=1){
+  if(finishShown)return;
+  finishShown=true;
+  clearGame();
+  const pts=Math.max(0,Math.round(points));
+  box(`<div class="finish"><div class="tag">PARTIE TERMINÉE</div><h2>${esc(game)}</h2><div class="big">${pts}</div><p class="muted">Score de la partie</p><input id="pseudoInput" class="pseudo" maxlength="20" autocomplete="nickname" placeholder="Ton pseudo (3 à 20 caractères)"><button class="primary" id="saveScoreBtn">Enregistrer le score</button><p id="saveMsg" class="muted">Le pseudo est conservé localement.</p></div>`);
+  const oldPseudo=localStorage.getItem("pixelArcadePseudo")||"";$("pseudoInput").value=oldPseudo;$("pseudoInput").focus();
+  $("saveScoreBtn").onclick=async()=>{
+    let pseudo=$("pseudoInput").value.trim().replace(/[^a-zA-Z0-9À-ÿ _-]/g,"");
+    if(pseudo.length<3)pseudo="Joueur";
+    saveLocalScore(game,pts,players,pseudo);
+    let savedOnline=false;
+    if(supa){
+      try{await api("scores",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({game,score:pts,players,pseudo})});savedOnline=true}
+      catch(e){try{await api("scores",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({game,score:pts,players})});savedOnline=true}catch(e2){console.warn("Score Supabase:",e2)}}
+    }
+    $("saveMsg").textContent=savedOnline?"Score enregistré !":"Score enregistré localement !";
+    $("saveScoreBtn").textContent="✓ Score enregistré";$("saveScoreBtn").disabled=true;
+    const again=document.createElement("button");again.className="back";again.style.marginLeft="8px";again.textContent="↻ Rejouer";again.onclick=restartCurrent;$('saveScoreBtn').after(again);
+    loadScores();
+  };
+}
+async function loadScores(){
+  const scoresEl=$("scores"); if(!scoresEl)return;
+  const game=pageGame;
+  try{
+    let d=[];
+    if(supa && game){d=await api("scores?game=eq."+encodeURIComponent(game)+"&select=score,players,created_at&order=score.desc&limit=10");}
+    else if(game){d=localScores().filter(x=>x.game===game).sort((a,b)=>b.score-a.score).slice(0,10);}
+    else {d=localScores().sort((a,b)=>b.score-a.score).slice(0,10);}
+    scoresEl.innerHTML=d.length?d.map((x,i)=>`<div class="row"><span>#${i+1} · ${x.players||1}P</span><b>${x.score}</b></div>`).join(""):"<p class=muted>Aucun score pour ce jeu.</p>";
+  }catch(e){let d=localScores().filter(x=>!game||x.game===game).sort((a,b)=>b.score-a.score).slice(0,10);scoresEl.innerHTML=d.length?d.map((x,i)=>`<div class="row"><span>#${i+1} · ${x.players||1}P</span><b>${x.score}</b></div>`).join(""):"<p class=muted>Aucun score pour ce jeu.</p>";}
+}
+
+let currentGame=null;
+function home(){ window.location.href="index.html"; }
+function start(n){
+  clearGame(); finishShown=false; currentGame=n;
+  const games={runner,memory,meteor,snake,breakout,flappy,reaction,quiz,clicker,pong,ttt,draw,tap,rps,lights,dots,math};
+  if(typeof games[n]==="function") games[n]();
+  const d=document.createElement("div");d.className="desc";d.innerHTML=`<strong>Description :</strong> ${esc(GAME_DESC[n]||"Jeu d’arcade local.")}`;$("game").prepend(d);
+}
+function restartCurrent(){if(currentGame)start(currentGame);}
+
+/* 1 Runner */
+function runner(){title("Pixel Runner");box('<div><div class=hud><span id=s>Score : 0</span><span>ESPACE / TAP</span></div><canvas id=c width=900 height=380></canvas></div>');let c=$("c"),x=c.getContext("2d"),y=310,v=0,o=[],f=0,over=false;function jump(){if(over){restartCurrent();return;}if(y>=310)v=-12}window.onkeydown=e=>{if(e.code==="Space"){e.preventDefault();jump()}};c.onpointerdown=jump;function loop(){if(over)return;f++;v+=.55;y+=v;if(y>310)y=310;if(f%65===0)o.push({x:900,w:25+Math.random()*25});o.forEach(z=>z.x-=6);o=o.filter(z=>z.x>-60);x.fillStyle="#10182b";x.fillRect(0,0,900,380);x.fillStyle="#293452";x.fillRect(0,345,900,35);x.fillStyle="#7481ff";x.fillRect(90,y,34,35);x.fillStyle="#ff637d";o.forEach(z=>x.fillRect(z.x,345-z.w,z.w,z.w));for(let z of o)if(z.x<124&&z.x+z.w>90&&y+35>345-z.w){over=true;score("runner",Math.floor(f/5));return}let sc=Math.floor(f/5);$("s").textContent="Score : "+sc;raf=requestAnimationFrame(loop)}loop()}
+
+/* 2 Memory */
+function memory(){title("Memory Grid");let sy=["🍒","⭐","🚀","🐸","🎮","🍕","👾","🌙"],d=[...sy,...sy].sort(()=>Math.random()-.5),open=[],moves=0,match=0;box('<div><div class=hud style="position:relative;inset:auto;margin-bottom:18px"><span id=m1>Coups : 0</span><span id=m2>Paires : 0/8</span></div><div class=memory id=mem></div></div>');d.forEach((v,i)=>{let b=document.createElement("button");b.className="tile";b.textContent=v;b.onclick=()=>{if(open.length===2||b.classList.contains("open")||b.classList.contains("matched"))return;b.classList.add("open");open.push([b,i]);if(open.length===2){moves++;$("m1").textContent="Coups : "+moves;if(d[open[0][1]]===d[i]){open.forEach(z=>z[0].classList.add("matched"));open=[];match++;$("m2").textContent=`Paires : ${match}/8`;if(match===8)score("memory",Math.max(1000-moves*25,100))}else timer(()=>{open.forEach(z=>z[0].classList.remove("open"));open=[]},550)}};$("mem").appendChild(b)})}
+
+/* 3 Meteor */
+function meteor(){title("Meteor Dodge");box('<div><div class=hud><span id=s>Score : 0</span><span>← → / A D</span></div><canvas id=c width=760 height=400></canvas></div>');let c=$("c"),x=c.getContext("2d"),p=380,m=[],f=0,over=false,k={};window.onkeydown=e=>k[e.key.toLowerCase()]=1;window.onkeyup=e=>k[e.key.toLowerCase()]=0;function loop(){if(over)return;f++;if(k.a||k.arrowleft)p-=5;if(k.d||k.arrowright)p+=5;p=Math.max(25,Math.min(735,p));if(f%20===0)m.push({x:15+Math.random()*730,y:-20,r:9+Math.random()*15,s:2+Math.random()*3});m.forEach(z=>z.y+=z.s);for(let z of m)if(Math.abs(z.x-p)<z.r+18&&z.y>345)over=true;m=m.filter(z=>z.y<430);let sc=Math.floor(f/3);$("s").textContent="Score : "+sc;x.fillStyle="#060912";x.fillRect(0,0,760,400);x.fillStyle="#7481ff";x.fillRect(p-20,360,40,18);x.fillStyle="#ff637d";m.forEach(z=>{x.beginPath();x.arc(z.x,z.y,z.r,0,7);x.fill()});if(over){score("meteor",sc);return}else raf=requestAnimationFrame(loop)}loop()}
+
+/* 4 Snake */
+function snake(){title("Snake");box('<div><div class=hud><span id=s>Score : 0</span><span>Flèches / WASD</span></div><canvas id=c width=480 height=480></canvas></div>');let c=$("c"),x=c.getContext("2d"),N=20,cell=24,b=[{x:10,y:10}],dir={x:1,y:0},next={x:1,y:0},food={x:5,y:5},sc=0,over=false;window.onkeydown=e=>{let k=e.key.toLowerCase(),q=k==="arrowup"||k==="w"?{x:0,y:-1}:k==="arrowdown"||k==="s"?{x:0,y:1}:k==="arrowleft"||k==="a"?{x:-1,y:0}:k==="arrowright"||k==="d"?{x:1,y:0}:null;if(q&&!(q.x===-dir.x&&q.y===-dir.y))next=q};function loop(){if(over)return;dir=next;let h={x:b[0].x+dir.x,y:b[0].y+dir.y};if(h.x<0||h.y<0||h.x>=N||h.y>=N||b.some(z=>z.x===h.x&&z.y===h.y)){over=true;score("snake",sc);draw();return}b.unshift(h);if(h.x===food.x&&h.y===food.y){sc+=10;do { food={x:Math.floor(Math.random()*N),y:Math.floor(Math.random()*N)} } while(b.some(z=>z.x===food.x&&z.y===food.y));}else b.pop();draw();timer(loop,100)}function draw(){x.fillStyle="#080b14";x.fillRect(0,0,480,480);x.fillStyle="#55df93";b.forEach(z=>x.fillRect(z.x*cell,z.y*cell,cell-2,cell-2));x.fillStyle="#ff637d";x.fillRect(food.x*cell,food.y*cell,cell-2,cell-2);$("s").textContent="Score : "+sc+(over?" — GAME OVER":"")}loop()}
+
+/* 5 Breakout */
+function breakout(){title("Brick Breaker");box('<div><div class=hud><span id=s>Score : 0</span><span>← → / souris</span></div><canvas id=c width=760 height=440></canvas></div>');let c=$("c"),x=c.getContext("2d"),p=325,ball={x:380,y:350,dx:4,dy:-4},br=[],sc=0,over=false,k={};for(let r=0;r<5;r++)for(let q=0;q<10;q++)br.push({x:20+q*73,y:50+r*25,w:65,h:17,on:true});window.onkeydown=e=>k[e.key]=1;window.onkeyup=e=>k[e.key]=0;c.onpointermove=e=>{let r=c.getBoundingClientRect();p=(e.clientX-r.left)/r.width*760-55};function loop(){if(over)return;if(k.ArrowLeft)p-=7;if(k.ArrowRight)p+=7;p=Math.max(0,Math.min(650,p));ball.x+=ball.dx;ball.y+=ball.dy;if(ball.x<8||ball.x>752)ball.dx*=-1;if(ball.y<30)ball.dy*=-1;if(ball.y>400&&ball.x>p&&ball.x<p+110)ball.dy=-Math.abs(ball.dy);if(ball.y>440){over=true;score("breakout",sc)}br.forEach(z=>{if(z.on&&ball.x>z.x&&ball.x<z.x+z.w&&ball.y>z.y&&ball.y<z.y+z.h){z.on=false;ball.dy*=-1;sc+=10}});x.fillStyle="#080b14";x.fillRect(0,0,760,440);x.fillStyle="#7481ff";br.forEach(z=>z.on&&x.fillRect(z.x,z.y,z.w,z.h));x.fillStyle="#fff";x.beginPath();x.arc(ball.x,ball.y,7,0,7);x.fill();x.fillStyle="#a36cff";x.fillRect(p,410,110,12);$("s").textContent="Score : "+sc;if(br.every(z=>!z.on)){over=true;score("breakout",sc)}if(!over)raf=requestAnimationFrame(loop)}loop()}
+
+/* 6 Flappy */
+function flappy(){title("Flappy Pixel");box('<div><div class=hud><span id=s>Score : 0</span><span>ESPACE / TAP</span></div><canvas id=c width=760 height=430></canvas></div>');let c=$("c"),x=c.getContext("2d"),y=210,v=0,pipes=[],f=0,sc=0,over=false;function flap(){if(over){restartCurrent();return;}v=-8}window.onkeydown=e=>{if(e.code==="Space")flap()};c.onpointerdown=flap;function loop(){if(over)return;f++;v+=.4;y+=v;if(f%100===0){let top=40+Math.random()*210;pipes.push({x:760,top,gap:130,passed:false})}pipes.forEach(z=>z.x-=3);for(let z of pipes){if(!z.passed&&z.x+60<80){z.passed=true;sc++}if(80+25>z.x&&80<z.x+60&&(y<z.top||y+25>z.top+z.gap))over=true}if(y<0||y>405)over=true;pipes=pipes.filter(z=>z.x>-70);x.fillStyle="#111a30";x.fillRect(0,0,760,430);x.fillStyle="#55df93";pipes.forEach(z=>{x.fillRect(z.x,0,60,z.top);x.fillRect(z.x,z.top+z.gap,60,430)});x.fillStyle="#ffbd55";x.fillRect(80,y,25,25);$("s").textContent="Score : "+sc;if(over){score("flappy",sc);return}else raf=requestAnimationFrame(loop)}loop()}
+
+/* 7 Reaction */
+function reaction(){title("Reaction Rush");box('<div class="center" style="text-align:center"><div id="r" style="height:270px;border-radius:20px;background:#151b2d;display:grid;place-items:center;font-size:30px;font-weight:900;cursor:pointer">ATTENDS…</div><p id=msg class=muted>Clique uniquement quand c\'est vert.</p></div>');let live=false,startAt=0,armed=false;let t=timer(()=>{armed=true;live=true;$("r").style.background="#55df93";$("r").textContent="CLIQUE !";startAt=performance.now()},1000+Math.random()*3000);$("r").onclick=()=>{if(!armed){clearTimeout(t);score("reaction",0);return}if(live){let ms=Math.round(performance.now()-startAt);$("msg").textContent=ms+" ms";score("reaction",Math.max(1,1000-ms));live=false}}}
+
+/* 8 Quiz */
+function quiz(){title("Quiz Blitz");let qsx=[["Capitale de la France ?","Paris",["Paris","Rome","Madrid","Berlin"]],["9 × 7 ?","63",["54","63","72","81"]],["Planète rouge ?","Mars",["Mars","Vénus","Jupiter","Mercure"]],["Côtés d'un hexagone ?","6",["5","6","7","8"]],["Plus grand océan ?","Pacifique",["Atlantique","Indien","Pacifique","Arctique"]],["Animal qui miaule ?","Chat",["Chien","Chat","Cheval","Poule"]]],i=0,sc=0;function render(){if(i>=qsx.length){score("quiz",sc*200);return}let q=qsx[i];box(`<div class=center><div class=question>${i+1}/${qsx.length} — ${q[0]}</div><div class=answers>${q[2].map(a=>`<button class=answer data-a="${esc(a)}">${esc(a)}</button>`).join("")}</div></div>`);document.querySelectorAll(".answer").forEach(b=>b.onclick=()=>{if(b.dataset.a===q[1])sc++;i++;render()})}render()}
+
+
+/* 9 Mega Clicker — progression locale, sauvegarde navigateur et automatisation */
+function clicker(){
+  title("Mega Clicker");
+  box(`<div class="clicker">
+    <div class="click-main">
+      <div class="tag">MEGA CLICKER</div>
+      <div class="click-title">Le Noyau d'Énergie</div>
+      <div id="cc" class="coins">0</div>
+      <div class="persec"><span id="cps">0</span> énergie / seconde</div>
+      <button id="core" class="core" aria-label="Cliquer pour produire de l'énergie">⚡</button>
+      <div class="stats">
+        <div class="stat"><span class="muted">Par clic</span><b id="pc">1</b></div>
+        <div class="stat"><span class="muted">Multiplicateur</span><b id="mult">x1</b></div>
+        <div class="stat"><span class="muted">Combo</span><b id="combo">0</b></div>
+      </div>
+      <p id="cm" class="muted">Clique sur le noyau pour commencer.</p>
+    </div>
+    <div class="click-side">
+      <h3>⚙️ Améliorations</h3>
+      <div id="upgrades" class="click-grid"></div>
+      <h3>🏅 Succès</h3>
+      <div id="achievements"></div>
+      <button id="finishClicker" class="primary" style="margin-top:10px">🏁 Terminer la partie</button> <button id="resetClicker" class="small" style="margin-top:10px">Réinitialiser</button>
+    </div>
+  </div>`);
+
+  const saveKey="pixelArcadeMegaClicker";
+  const defaults={
+    energy:0,total:0,clickPower:1,mult:1,auto:0,crit:0,combo:0,bestCombo:0,
+    levels:{power:0,auto:0,mult:0,crit:0}
+  };
+  let st;
+  try{st=JSON.parse(localStorage.getItem(saveKey))||structuredClone(defaults)}catch(e){st=structuredClone(defaults)}
+  st.levels=Object.assign(defaults.levels,st.levels||{});
+  let lastClick=0,comboTimer=null,saveTimer=null;
+
+  const upgrades=[
+    {id:"power",name:"⚡ Condensateur",desc:"+1 énergie par clic",base:25,max:30,apply:()=>st.clickPower++},
+    {id:"auto",name:"🤖 Drone",desc:"+1 énergie / seconde",base:80,max:25,apply:()=>st.auto++},
+    {id:"mult",name:"🔷 Amplificateur",desc:"+0,5× multiplicateur",base:180,max:10,apply:()=>st.mult+=.5},
+    {id:"crit",name:"💥 Réacteur critique",desc:"+3% chance de critique",base:350,max:15,apply:()=>st.crit++}
+  ];
+  function cost(u){return Math.floor(u.base*Math.pow(1.72,st.levels[u.id]))}
+  function fmt(n){if(n<1000)return Math.floor(n).toString();let units=["K","M","B","T","Qa","Qi"];let i=-1;while(n>=1000&&i<units.length-1){n/=1000;i++}return n.toFixed(n>=100?0:n>=10?1:2)+units[i]}
+  function save(){try{localStorage.setItem(saveKey,JSON.stringify(st))}catch(e){}}
+  function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(save,300)}
+
+  function render(){
+    $("cc").textContent=fmt(st.energy);
+    $("pc").textContent=fmt(st.clickPower*st.mult);
+    $("mult").textContent="x"+st.mult.toFixed(1);
+    $("combo").textContent=st.combo;
+    $("cps").textContent=fmt(st.auto*st.clickPower*st.mult);
+    $("upgrades").innerHTML=upgrades.map(u=>{
+      let lv=st.levels[u.id],price=cost(u),disabled=lv>=u.max||st.energy<price;
+      return `<button class="upgrade" data-up="${u.id}" ${disabled?"disabled":""}>
+        <strong>${u.name} ${lv>=u.max?"MAX":"Nv."+lv}</strong>
+        <small>${u.desc}</small>
+        <small>${lv>=u.max?"Amélioration terminée":"Coût : "+fmt(price)}</small>
+      </button>`;
+    }).join("");
+    $("upgrades").querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{
+      let u=upgrades.find(x=>x.id===b.dataset.up),price=cost(u);
+      if(!u||st.levels[u.id]>=u.max||st.energy<price)return;
+      st.energy-=price;st.levels[u.id]++;u.apply();render();scheduleSave();
+    });
+    const ach=[
+      ["Premier clic",st.total>=1],
+      ["100 énergie",st.total>=100],
+      ["1 000 énergie",st.total>=1000],
+      ["Combo x10",st.bestCombo>=10],
+      ["Drone",st.auto>=1],
+      ["Puissance x2",st.mult>=2],
+      ["Critique",st.crit>=1]
+    ];
+    $("achievements").innerHTML=ach.map(a=>`<div class="achievement ${a[1]?"on":""}">${a[1]?"✓":"○"} ${a[0]}</div>`).join("");
+  }
+
+  function clickCore(e){
+    let now=performance.now();
+    st.combo=(now-lastClick<900)?st.combo+1:1;
+    st.bestCombo=Math.max(st.bestCombo,st.combo);
+    lastClick=now;
+    clearTimeout(comboTimer);
+    comboTimer=timer(()=>{st.combo=0;render()},950);
+    let crit=Math.random()<Math.min(.45,st.crit*.03);
+    let amount=st.clickPower*st.mult*(crit?3:1)*(1+Math.min(st.combo,25)*.02);
+    st.energy+=amount;st.total+=amount;
+    $("cm").textContent=crit?"💥 CRITIQUE !":"+"+fmt(amount)+" énergie";
+    let pop=document.createElement("div");pop.className="pop";pop.textContent=(crit?"CRITIQUE +":"+")+fmt(amount);
+    pop.style.left=(e.clientX||window.innerWidth/2)+"px";pop.style.top=(e.clientY||300)+"px";document.body.appendChild(pop);setTimeout(()=>pop.remove(),700);
+    render();scheduleSave();
+  }
+
+  $("core").onpointerdown=clickCore;
+  $("finishClicker").onclick=()=>score("mega-clicker",Math.floor(st.total),1);
+  $("resetClicker").onclick=()=>{
+    if(confirm("Réinitialiser toute la progression du Mega Clicker ?")){
+      st=structuredClone(defaults);save();render();$("cm").textContent="Progression réinitialisée.";
+    }
+  };
+
+  // Production automatique : une seule boucle liée au jeu courant.
+  function autoTick(){
+    if(st.auto>0){
+      st.energy+=st.auto*st.clickPower*st.mult;
+      st.total+=st.auto*st.clickPower*st.mult;
+      render();
+      scheduleSave();
+    }
+    timer(autoTick,1000);
+  }
+  render();
+  timer(autoTick,1000);
+}
+
+/* 10 Pong */
+function pong(){title("Pong Duel");box('<div><div class=hud><span id=a>J1 0</span><span id=b>J2 0</span></div><canvas id=c width=820 height=460></canvas></div>');let c=$("c"),x=c.getContext("2d"),p1=190,p2=190,ball={x:410,y:230,dx:5,dy:3},s1=0,s2=0,k={};window.onkeydown=e=>k[e.key]=1;window.onkeyup=e=>k[e.key]=0;function reset(dir){ball={x:410,y:230,dx:dir*(5),dy:(Math.random()>.5?3:-3)}}function loop(){if(k.w)p1-=6;if(k.s)p1+=6;if(k.ArrowUp)p2-=6;if(k.ArrowDown)p2+=6;p1=Math.max(0,Math.min(390,p1));p2=Math.max(0,Math.min(390,p2));ball.x+=ball.dx;ball.y+=ball.dy;if(ball.y<8||ball.y>452)ball.dy*=-1;if(ball.x<50&&ball.y>p1&&ball.y<p1+70)ball.dx=Math.abs(ball.dx);if(ball.x>770&&ball.y>p2&&ball.y<p2+70)ball.dx=-Math.abs(ball.dx);if(ball.x<0){s2++;reset(1)}if(ball.x>820){s1++;reset(-1)}x.fillStyle="#070a12";x.fillRect(0,0,820,460);x.fillStyle="#7481ff";x.fillRect(25,p1,20,70);x.fillRect(775,p2,20,70);x.fillStyle="#fff";x.beginPath();x.arc(ball.x,ball.y,8,0,7);x.fill();$("a").textContent="J1 "+s1;$("b").textContent="J2 "+s2;if(s1>=7||s2>=7){score("pong",Math.max(s1,s2),2);return}raf=requestAnimationFrame(loop)}loop()}
+
+/* 11 Morpion */
+function ttt(){title("Morpion");let b=Array(9).fill(""),turn="X",done=false;function win(v){return[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].some(a=>a.every(i=>b[i]===v))}function render(msg=""){box(`<div style="text-align:center"><h2>Tour : ${turn}</h2><div style="display:grid;grid-template-columns:repeat(3,90px);gap:7px;justify-content:center">${b.map((v,i)=>`<button class=small style="height:90px;font-size:38px" data-i="${i}">${v}</button>`).join("")}</div><p>${msg}</p><button class=primary id=again>Recommencer</button></div>`);document.querySelectorAll("[data-i]").forEach(z=>z.onclick=()=>{let i=+z.dataset.i;if(done||b[i])return;b[i]=turn;if(win(turn)){done=true;score("morpion",1,2)}else if(b.every(Boolean)){done=true;score("morpion",0,2)}else{turn=turn==="X"?"O":"X";render()}});$("again").onclick=restartCurrent}render()}
+
+/* 12 Quick Draw */
+function draw(){title("Quick Draw");box('<div class=center style="text-align:center"><div id=d style="height:280px;border-radius:20px;background:#151b2d;display:grid;place-items:center;font-size:28px;font-weight:900">J1 : F • J2 : J</div><p id=dm class=muted>Attendez le signal…</p></div>');let live=false,locked=false;let t=timer(()=>{live=true;$("d").style.background="#55df93";$("d").textContent="GO !"},1200+Math.random()*2200);window.onkeydown=e=>{let k=e.key.toLowerCase();if(locked||!["f","j"].includes(k))return;if(!live){clearTimeout(t);locked=true;$("dm").textContent="Trop tôt !";score("quick-draw",0,2);return}locked=true;let w=k==="f"?"J1":"J2";$("dm").textContent=w+" gagne !";score("quick-draw",1,2)}} 
+
+/* 13 Tap */
+function tap(){title("Tap Battle");box('<div class="center" style="text-align:center"><h2>F = J1 • J = J2</h2><div style="height:45px;background:#171e34;border-radius:99px;overflow:hidden"><div id=tb style="height:100%;width:50%;background:#7481ff></div></div><p id=tm>50%</p></div>');let v=50,done=false;window.onkeydown=e=>{if(done)return;let k=e.key.toLowerCase();if(k==="f")v-=3;if(k==="j")v+=3;v=Math.max(0,Math.min(100,v));$("tb").style.width=v+"%";$("tm").textContent=Math.round(v)+"%";if(v<=0||v>=100){done=true;let w=v<=0?"J1":"J2";$("tm").textContent=w+" gagne !";score("tap-battle",100,2)}}}
+
+/* 14 RPS */
+function rps(){title("Shifumi");box('<div class="center" style="text-align:center"><h2>Premier à 3 manches</h2><p>J1 : A 🪨 • S 📄 • D ✂️</p><p>J2 : J 🪨 • K 📄 • L ✂️</p><p id=rm class=muted>Faites vos choix…</p></div>');let a=null,b=null,wins=[0,0],map={a:"🪨",s:"📄",d:"✂️",j:"🪨",k:"📄",l:"✂️"};window.onkeydown=e=>{let k=e.key.toLowerCase();if(!map[k]||finishShown)return;if("asd".includes(k))a=map[k];else b=map[k];if(a&&b){let w=a===b?-1:((a==="🪨"&&b==="✂️")||(a==="📄"&&b==="🪨")||(a==="✂️"&&b==="📄")?0:1);if(w>=0)wins[w]++;let txt=w<0?"Égalité":`J${w+1} gagne la manche`;$("rm").textContent=`J1 ${a} • J2 ${b} → ${txt} · Score ${wins[0]}-${wins[1]}`;a=b=null;if(wins[0]>=3||wins[1]>=3)score("shifumi",Math.max(wins[0],wins[1])*100,2)}}}
+
+/* 15 Lights */
+function lights(){title("Light Race");box('<div class="center" style="text-align:center"><div class="versus"><div class=scorebox>J1<div id=l1 class=big>0</div>F</div><div class=scorebox>J2<div id=l2 class=big>0</div>J</div></div><p id=lm>La cible arrive…</p></div>');let s=[0,0],target=-1,locked=true,finished=false;function spawn(){if(finished)return;locked=false;target=Math.random()<.5?0:1;$("lm").textContent=target===0?"⚡ F !":"⚡ J !";timer(()=>{if(!locked){locked=true;spawn()}},1200)}window.onkeydown=e=>{if(finished||locked)return;let k=e.key.toLowerCase(),w=k==="f"?0:k==="j"?1:-1;if(w<0)return;if(w===target){locked=true;s[w]++;$("l"+(w+1)).textContent=s[w];if(s[w]>=7){finished=true;$("lm").textContent=(w?"J2":"J1")+" gagne !";score("light-race",7,2)}else spawn()}};spawn()}
+
+/* 16 Dots */
+function dots(){title("Dot Duel");box('<div class="center" style="text-align:center"><h2>Capture les 25 cases</h2><p>J1 = A • J2 = L</p><div id="dd" style="display:grid;grid-template-columns:repeat(5,55px);gap:7px;justify-content:center"></div><p id="dt">J1 : 0 — J2 : 0</p></div>');let turn=0,s=[0,0],taken=0,done=false;for(let i=0;i<25;i++){let z=document.createElement("button");z.className="small";z.style.height="55px";z.textContent="•";z.onclick=()=>{if(done||z.dataset.used)return;z.dataset.used=1;z.style.background=turn?"#a36cff":"#7481ff";s[turn]++;taken++;turn=1-turn;$("dt").textContent=`J1 : ${s[0]} — J2 : ${s[1]}`;if(taken===25){done=true;let pts=Math.max(s[0],s[1])*40;score("dot-duel",pts,2)}};$("dd").appendChild(z)}window.onkeydown=e=>{let k=e.key.toLowerCase();if(done)return;if((k==="a"&&turn===0)||(k==="l"&&turn===1)){let z=[...$("dd").children].find(q=>!q.dataset.used);if(z)z.click()}}}
+
+/* 17 Math */
+function math(){title("Math Duel");let s=[0,0],q=null,locked=false,answerBox=null;
+function next(){
+  let a=2+Math.floor(Math.random()*18),b=2+Math.floor(Math.random()*18);
+  q={ans:a*b,text:`${a} × ${b} = ?`};locked=false;
+  box(`<div class="center" style="text-align:center">
+    <div class="versus"><div class="scorebox">J1<div class="big">${s[0]}</div>F</div><div class="scorebox">J2<div class="big">${s[1]}</div>J</div></div>
+    <h2>${q.text}</h2><p class="muted">Chaque joueur appuie sur sa touche puis écrit sa réponse.</p>
+    <input id="mathInput" inputmode="numeric" autocomplete="off" style="width:180px;padding:12px;border-radius:10px;border:1px solid var(--line);background:#151b2d;color:#fff;font-size:22px;text-align:center" placeholder="Réponse">
+    <div style="margin-top:10px"><button class="primary" id="mathJ1">J1 — F</button> <button class="primary" id="mathJ2">J2 — J</button></div>
+    <p id="mathMsg" class="muted">Choisissez un joueur.</p></div>`);
+  answerBox=$("mathInput");answerBox.focus();
+  $("mathJ1").onclick=()=>answer(0);$("mathJ2").onclick=()=>answer(1);
+}
+function answer(player){
+  if(locked||!q)return;
+  let ans=Number(answerBox.value.trim());
+  if(!Number.isFinite(ans)){ $("mathMsg").textContent="Écris un nombre."; answerBox.focus(); return; }
+  locked=true;
+  if(ans===q.ans){
+    s[player]++;
+    if(s[player]>=5){
+      score("math-duel",5,2);
+      q=null;return;
+    }
+  }
+  next();
+}
+window.onkeydown=e=>{if(e.key==="Enter"&&!locked&&q)answer(0);};
+next();}
+const pageGame=document.body.dataset.game||"";
+initSupa();
+setTimeout(()=>{loadScores();if(pageGame)start(pageGame)},0);
+function setTheme(t){document.body.classList.toggle("light",t==="light");localStorage.setItem("pixelArcadeTheme",t);const b=$("themeBtn");if(b)b.textContent=t==="light"?"☀️ Clair":"🌙 Sombre"}
+(function(){const t=localStorage.getItem("pixelArcadeTheme")||"dark";document.body.classList.toggle("light",t==="light");window.addEventListener("DOMContentLoaded",()=>{const b=$("themeBtn");if(b)b.textContent=t==="light"?"☀️ Clair":"🌙 Sombre"})})();
