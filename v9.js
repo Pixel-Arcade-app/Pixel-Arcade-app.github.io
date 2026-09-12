@@ -2,6 +2,7 @@
 (()=>{
   function ready(){
     const $=id=>document.getElementById(id);
+    document.querySelectorAll('footer').forEach(f=>{f.innerHTML=f.innerHTML.replace(/version 8\.1|version 8\.0/g,'version 9.0')});
     const fixedEnter=function(){const target=$('game');if(!target)return;target.style.width='100vw';target.style.height='100vh';target.style.maxWidth='none';target.style.minHeight='100vh';target.style.margin='0';target.style.borderRadius='0';target.style.background='#050912';target.style.overflow='auto';if(document.fullscreenElement)return;try{const p=target.requestFullscreen?target.requestFullscreen({navigationUI:'hide'}):null;if(p&&p.then)p.then(()=>document.body.classList.add('playing')).catch(()=>document.body.classList.add('playing'));else document.body.classList.add('playing')}catch(e){document.body.classList.add('playing')}};
     const fixedExit=async()=>{document.body.classList.remove('playing');try{if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch{}};
     window.enterGameFullscreen=fixedEnter;window.exitGameFullscreen=fixedExit;
