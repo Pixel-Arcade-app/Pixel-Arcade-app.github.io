@@ -1,0 +1,5 @@
+Pixel Arcade — version pages séparées
+
+Mettre TOUS les fichiers à la racine du dépôt GitHub Pages.
+Le fichier d’accueil est index.html.
+Chaque jeu a sa propre page HTML.
