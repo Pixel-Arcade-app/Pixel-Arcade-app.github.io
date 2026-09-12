@@ -16,3 +16,14 @@ body.light .game{background:#0b1020;color:#fff}
 body.light .game .muted{color:#cbd5e1}
 body.light .game .desc{color:#dbe4f3}
 body.light .back,body.light .theme,body.light .filter{font-weight:700}
+
+/* Mode clair : titres et noms de jeux toujours lisibles */
+body.light{color:#111827!important}
+body.light h1,body.light h2,body.light h3,body.light h4,body.light .card h2,body.light .card h3,body.light .card b,body.light .panel h2,body.light .bar h2,body.light .ey{color:#111827!important}
+body.light .card{color:#111827!important;background:#fff!important;border-color:#cbd5e1!important}
+body.light .card p,body.light .muted,body.light .sub,body.light .tag{color:#475569!important}
+body.light .card b{color:#4f46c5!important}
+body.light .theme,body.light .filter,body.light .back,body.light .small{color:#111827!important;background:#fff!important;border-color:#cbd5e1!important}
+body.light .panel{background:#fff!important;color:#111827!important;border-color:#cbd5e1!important}
+body.light .game{background:#070a12!important;color:#fff!important}
+body.light .game .muted{color:#b9c4d8!important}

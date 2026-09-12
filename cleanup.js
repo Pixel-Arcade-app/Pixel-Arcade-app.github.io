@@ -1,0 +1,1 @@
+(async()=>{try{if('serviceWorker' in navigator){for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister()}if('caches' in window){for(const k of await caches.keys())await caches.delete(k)}}catch(e){console.warn('Cache cleanup:',e)}})();
