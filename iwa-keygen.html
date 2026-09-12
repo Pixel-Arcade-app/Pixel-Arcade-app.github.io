@@ -7,50 +7,53 @@
   <style>
     body{font-family:system-ui,sans-serif;background:#070a12;color:#fff;max-width:760px;margin:0 auto;padding:32px;line-height:1.55}
     .box{background:#111827;border:1px solid #26314d;border-radius:18px;padding:24px}
-    button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}
-    pre{white-space:pre-wrap;word-break:break-word;background:#05070d;padding:14px;border-radius:12px}
+    button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;margin:4px 4px 4px 0}
+    pre{white-space:pre-wrap;word-break:break-word;background:#05070d;padding:14px;border-radius:12px;max-height:260px;overflow:auto}
     .warn{color:#ffd166}.ok{color:#7ee787}.error{color:#ff6b81}
+    .copy{background:#7c5cff;color:#fff}.download{background:#26314d;color:#fff}
   </style>
 </head>
 <body>
   <div class="box">
     <h1>🔐 Clé de signature Pixel Arcade AWI</h1>
-    <p>Cette page génère une clé privée <b>ECDSA P-256</b> directement dans ton navigateur. Ce format est officiellement accepté par les AWI et fonctionne avec <code>wbn-sign</code>.</p>
+    <p>Cette page génère une clé privée <b>ECDSA P-256</b> directement dans ton navigateur. Le fichier PEM est compatible avec <code>wbn-sign</code>.</p>
     <p class="warn"><b>Important :</b> la clé privée ne doit jamais être publiée dans le dépôt GitHub ni envoyée dans une conversation.</p>
     <button id="generate">Générer une nouvelle clé</button>
     <p id="status" class="warn"></p>
     <div id="result" hidden>
-      <p class="ok">Clé générée. Télécharge le fichier puis remplace le secret GitHub <b>IWA_PRIVATE_KEY</b> par son contenu.</p>
-      <button id="download">Télécharger private_key.pem</button>
+      <p class="ok"><b>Clé générée.</b> Pour GitHub, utilise de préférence la valeur Base64 ci-dessous : elle évite les problèmes de retours à la ligne dans les Secrets.</p>
+      <p><b>1.</b> Copie toute la valeur Base64 et mets-la dans le secret GitHub <code>IWA_PRIVATE_KEY</code>.</p>
+      <pre id="secret"></pre>
+      <button id="copy" class="copy">Copier le secret Base64</button>
+      <button id="download" class="download">Télécharger private_key.pem</button>
+      <p><b>2.</b> Garde exactement cette même clé pour toutes les futures mises à jour de l'AWI. Si tu changes de clé, Chrome considérera l'application comme une autre AWI.</p>
       <pre id="public"></pre>
-      <p><b>Attention :</b> garde exactement cette même clé pour toutes les futures mises à jour de l'AWI. Si tu changes de clé, Chrome considérera l'application comme une autre AWI.</p>
     </div>
   </div>
   <script>
     const $=s=>document.querySelector(s);
-    let pem='';
+    let pem='', secret='';
     function b64(buf){let s='';const a=new Uint8Array(buf);for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode(...a.subarray(i,i+0x8000));return btoa(s)}
     function pemWrap(type,data){const x=b64(data),lines=x.match(/.{1,64}/g)||[];return `-----BEGIN ${type}-----\n${lines.join('\n')}\n-----END ${type}-----\n`}
     $('#generate').onclick=async()=>{
-      $('#status').textContent='Génération…';
-      $('#result').hidden=true;
+      $('#status').className='warn';$('#status').textContent='Génération…';$('#result').hidden=true;
       try{
         if(!crypto?.subtle)throw new Error('Web Crypto n’est pas disponible.');
         const kp=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
         const priv=await crypto.subtle.exportKey('pkcs8',kp.privateKey);
         const pub=await crypto.subtle.exportKey('spki',kp.publicKey);
         pem=pemWrap('PRIVATE KEY',priv);
+        secret=b64(priv);
+        $('#secret').textContent=secret;
         $('#public').textContent='Clé publique (information uniquement) :\n'+b64(pub);
-        $('#result').hidden=false;
-        $('#status').textContent='';
+        $('#result').hidden=false;$('#status').textContent='';
       }catch(e){$('#status').className='error';$('#status').textContent='Impossible de générer la clé dans ce navigateur : '+e.message}
     };
-    $('#download').onclick=()=>{
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(new Blob([pem],{type:'application/x-pem-file'}));
-      a.download='private_key.pem';a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    $('#copy').onclick=async()=>{
+      try{await navigator.clipboard.writeText(secret);$('#copy').textContent='Secret copié ✓';setTimeout(()=>$('#copy').textContent='Copier le secret Base64',1500)}
+      catch(e){$('#status').className='error';$('#status').textContent='Copie automatique impossible : sélectionne et copie toute la valeur Base64.'}
     };
+    $('#download').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([pem],{type:'application/x-pem-file'}));a.download='private_key.pem';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
   </script>
 </body>
 </html>
