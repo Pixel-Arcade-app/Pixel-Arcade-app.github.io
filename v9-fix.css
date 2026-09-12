@@ -1,5 +1,5 @@
-/* Pixel Arcade 10.4 — thèmes + plein écran */
-body:not(.playing)::after{content:'Pixel Arcade • version 10.4'!important}
+/* Pixel Arcade 10.5 — plein écran propre + thèmes */
+body:not(.playing)::after{content:'Pixel Arcade • version 10.5'!important}
 :root[data-pa-palette="violet"]{--a:#8b5cf6;--pa-accent:#8b5cf6;--pa-accent-2:#c084fc}
 :root[data-pa-palette="blue"]{--a:#38bdf8;--pa-accent:#38bdf8;--pa-accent-2:#60a5fa}
 :root[data-pa-palette="green"]{--a:#22c55e;--pa-accent:#22c55e;--pa-accent-2:#84cc16}
@@ -24,15 +24,26 @@ button.primary,.primary{background:linear-gradient(135deg,var(--pa-accent),var(-
 .filter.active{background:var(--a)!important;border-color:var(--a)!important}
 .account-chip{border-color:var(--pa-accent)!important}
 
-/* Plein écran : toute la surface disponible, avec un fond uni. */
-.playing .game:fullscreen,.game:fullscreen{width:100vw!important;height:100vh!important;min-height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:24px!important;border:0!important;border-radius:0!important;background:#0b1020!important;color:#fff!important;overflow:hidden!important;display:grid!important;place-items:center!important}
-.playing .game:fullscreen>.biggame,.playing .game:fullscreen>.center,.playing .game:fullscreen>.game-inner,.playing .game:fullscreen>.game-area{width:min(1400px,94vw)!important;max-width:94vw!important;max-height:90vh!important}
-.playing .game:fullscreen>canvas{width:min(1400px,94vw)!important;max-width:94vw!important;max-height:88vh!important;height:auto!important}
-.playing .game:fullscreen .biggame{width:min(1400px,94vw)!important;min-height:min(820px,88vh)!important;height:88vh!important;max-height:88vh!important}
-.playing .game:fullscreen .biggame canvas{max-width:100%!important;max-height:82vh!important}
-.playing .game:fullscreen .hud{top:18px!important;left:22px!important;right:22px!important}
+/* =========================
+   PLEIN ÉCRAN — ZÉRO ESPACE INUTILE
+   ========================= */
+html:has(#game:fullscreen),body:has(#game:fullscreen){background:#0b1020!important}
+#game:fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;min-width:100vw!important;min-height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:12px 20px 20px!important;border:0!important;border-radius:0!important;background:#0b1020!important;color:#fff!important;overflow:hidden!important;display:flex!important;align-items:center!important;justify-content:center!important}
+#game:fullscreen>.biggame{width:min(1500px,96vw)!important;max-width:1500px!important;height:calc(100vh - 32px)!important;max-height:none!important;min-height:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:14px!important}
+#game:fullscreen>.biggame>.hud{width:100%!important;max-width:none!important;flex:0 0 auto!important;position:relative!important;inset:auto!important}
+#game:fullscreen>.biggame>canvas{width:min(1450px,94vw)!important;max-width:94vw!important;max-height:calc(100vh - 150px)!important;height:auto!important;object-fit:contain!important}
+#game:fullscreen>.biggame>#aim,#game:fullscreen>.biggame>#dot{width:min(1450px,94vw)!important;height:calc(100vh - 155px)!important;max-height:calc(100vh - 155px)!important;min-height:420px!important;flex:1 1 auto!important}
+#game:fullscreen>.biggame>p{margin:0!important;flex:0 0 auto!important}
+#game:fullscreen>.biggame .memory{transform:scale(min(1.25,1));transform-origin:center}
+#game:fullscreen .clicker{width:min(1450px,96vw)!important;max-width:none!important}
+#game:fullscreen .finish{width:min(650px,92vw)!important}
 
-/* Bouton plein écran */
+/* Les anciens sélecteurs restent compatibles avec les pages déjà chargées. */
+.playing .game:fullscreen{width:100vw!important;height:100vh!important;min-height:100vh!important;max-width:none!important;max-height:none!important;background:#0b1020!important;margin:0!important;padding:12px 20px 20px!important;border:0!important;border-radius:0!important;overflow:hidden!important}
+.playing .game:fullscreen>.biggame{width:min(1500px,96vw)!important;max-width:1500px!important;height:calc(100vh - 32px)!important;max-height:none!important;min-height:0!important}
+.playing .game:fullscreen>.biggame canvas{max-width:94vw!important;max-height:calc(100vh - 150px)!important;width:min(1450px,94vw)!important;height:auto!important}
+
+/* Bouton plein écran / sortie */
 .pa-fullscreen-btn{position:fixed!important;top:20px!important;right:20px!important;z-index:10000!important;padding:10px 15px!important;border:1px solid var(--pa-accent,#7280ff)!important;border-radius:12px!important;background:#11172aee!important;color:#fff!important;font-weight:800!important;cursor:pointer!important;backdrop-filter:blur(8px)}
 .pa-fullscreen-btn:hover{transform:translateY(-1px);filter:brightness(1.12)}
-@media(max-width:700px){.game:fullscreen{padding:12px!important}.playing .game:fullscreen .biggame{width:96vw!important;height:92vh!important;min-height:0!important}}
+@media(max-width:700px){#game:fullscreen{padding:8px!important}#game:fullscreen>.biggame{width:96vw!important;height:calc(100vh - 16px)!important}.playing .game:fullscreen .biggame{width:96vw!important;height:calc(100vh - 16px)!important}.playing .game:fullscreen .biggame canvas,#game:fullscreen>.biggame>canvas{width:96vw!important;max-width:96vw!important;max-height:calc(100vh - 145px)!important}#game:fullscreen>.biggame>#aim,#game:fullscreen>.biggame>#dot{width:96vw!important;height:calc(100vh - 145px)!important;min-height:300px!important}}
