@@ -9,7 +9,7 @@ main{max-width:1350px;margin:auto;padding:22px 18px 70px}.toolbar{display:flex;g
 body.light{--bg:#f4f6fb;--p:#fff;--p2:#eef1f7;--line:#cbd2df;--txt:#111827;--muted:#536176;background:linear-gradient(180deg,#f8faff,#eef2f8)}body.light header{background:#fff}body.light .ey{color:#4b55b8}body.light .card{background:#fff;color:#111827;box-shadow:0 3px 12px #1b27400d}body.light .card p{color:#536176}body.light .card b{color:#4f5dd1}body.light .panel{background:#fff}body.light .filter,body.light .back,body.light .small,body.light .theme{background:#fff;color:#111827}body.light .sub{color:#536176}
 @media(max-width:1050px){.games{grid-template-columns:repeat(2,1fr)}}@media(max-width:800px){.clicker{grid-template-columns:1fr}}@media(max-width:600px){header{display:block}.status{display:inline-block;margin-top:15px}.games{grid-template-columns:1fr}.memory{grid-template-columns:repeat(4,58px)}.tile{width:58px;height:58px}.answers{grid-template-columns:1fr}.game{min-height:520px}}
 
-/* v8 — mode clair renforcé */
+/* Mode clair renforcé */
 body.light h1,body.light h2,body.light h3,body.light .card h2,body.light .card b,body.light .bar h2,body.light .panel h2{color:#111827}
 body.light .tag{color:#536176}
 body.light .game{background:#0b1020;color:#fff}
