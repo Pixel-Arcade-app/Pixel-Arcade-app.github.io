@@ -41,7 +41,6 @@ jobs:
           set -euo pipefail
           test -n "$IWA_PRIVATE_KEY" || { echo "❌ Le secret IWA_PRIVATE_KEY est manquant."; exit 1; }
           rm -f iwa-private-key.pem iwa-private-key.der
-          # Le secret peut être soit le PEM complet, soit le Base64 PKCS#8 produit par iwa-keygen.html.
           if printf '%s' "$IWA_PRIVATE_KEY" | grep -q '^-----BEGIN '; then
             printf '%s' "$IWA_PRIVATE_KEY" | tr -d '\r' | sed 's/\\n/\n/g' > iwa-private-key.pem
           else
@@ -73,9 +72,10 @@ jobs:
           mkdir -p "pages-site/iwa"
           if [ -f signed.swbn ]; then
             cp signed.swbn "pages-site/iwa/pixel-arcade-${IWA_VERSION}.swbn"
-            echo "✅ IWA signée incluse dans le site Pages."
+            cp signed.swbn "pages-site/iwa/pixel-arcade-latest.swbn"
+            echo "IWA signée incluse dans le site Pages."
           else
-            echo "⚠️ IWA non signée pour cette exécution : la clé de signature doit encore être corrigée. Le site principal sera quand même publié."
+            echo "IWA non signée pour cette exécution : le site principal sera quand même publié."
           fi
           python3 - <<'PY'
           import json, os
