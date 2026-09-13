@@ -21,7 +21,9 @@
       body.light:not(.pa-admin) .hero-panel{background:linear-gradient(135deg,#eef0ff,#fff)!important;border-color:#d5dcf0;box-shadow:0 8px 28px rgba(61,72,160,.08)}
       body.light:not(.pa-admin) .controls{background:#f2f6fb!important;border-color:#d5deea}
       body.light:not(.pa-admin) .row{background:#fff!important;color:#172033!important;border:1px solid #dbe2eb;box-shadow:0 2px 8px rgba(30,43,65,.04)}
+      body.light:not(.pa-admin) .row span,body.light:not(.pa-admin) .row b{color:#172033!important}
       body.light:not(.pa-admin) .stat{background:#f7f9fc!important;color:#172033!important;border-color:#d7dfeb!important}
+      body.light:not(.pa-admin) .stat b,body.light:not(.pa-admin) .stat span{color:#172033!important}
       body.light:not(.pa-admin) .scorebox{background:#fff!important;color:#172033!important;border-color:#d5deea!important}
       body.light:not(.pa-admin) .finish{background:#fff!important;color:#172033!important;border-color:#d5deea!important;box-shadow:0 12px 32px rgba(30,43,65,.08)}
       body.light:not(.pa-admin) .desc{background:#f2f6fb!important;color:#40516a!important;border-color:#d5deea!important}
@@ -32,6 +34,7 @@
       body.light:not(.pa-admin) .upgrade small,body.light:not(.pa-admin) .persec{color:#5b6b82!important}
       body.light:not(.pa-admin) .combo-bar{background:#dfe6f0}
       body.light:not(.pa-admin) .lab-head span{background:#eef1ff;color:#4f5bb7}
+      body.light:not(.pa-admin) .favorite-btn{background:#fff!important;color:#172033!important;border-color:#ccd7e5!important}
       body.light:not(.pa-admin) footer{color:#607089!important;border-color:#d7dfeb!important}
       body.light:not(.pa-admin) footer [data-pa-author]{opacity:.9}
       .pa-theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--p);color:var(--txt);font:inherit;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(20,30,50,.08)}
@@ -44,24 +47,29 @@
   }
 
   function applyTheme(){
-    if(isAdmin){document.body.classList.remove('light','pa-admin');document.body.classList.add('pa-admin');return}
+    if(isAdmin){document.body.classList.remove('light');document.body.classList.add('pa-admin');return}
     document.body.classList.remove('pa-admin');
     const saved=localStorage.getItem('pa_theme');
     document.body.classList.toggle('light',saved!=='dark');
   }
 
   function addThemeToggle(){
-    if(isAdmin||document.getElementById('paThemeToggle'))return;
-    const b=document.createElement('button');b.type='button';b.id='paThemeToggle';b.className='pa-theme-toggle';
-    b.addEventListener('click',()=>{
-      const light=!document.body.classList.contains('light');
-      document.body.classList.toggle('light',light);
-      localStorage.setItem('pa_theme',light?'light':'dark');
-      updateThemeLabel();
-    });
-    const head=document.querySelector('.head-actions');
-    if(head){head.appendChild(b)}else{
-      const wrap=document.createElement('div');wrap.className='pa-theme-fab';wrap.appendChild(b);document.body.appendChild(wrap);
+    if(isAdmin)return;
+    let b=document.getElementById('paThemeToggle')||document.getElementById('themeBtn');
+    if(!b){
+      b=document.createElement('button');b.type='button';
+      const head=document.querySelector('.head-actions');
+      if(head)head.appendChild(b);else{const wrap=document.createElement('div');wrap.className='pa-theme-fab';wrap.appendChild(b);document.body.appendChild(wrap)}
+    }
+    b.id='paThemeToggle';b.classList.add('pa-theme-toggle');b.removeAttribute('onclick');
+    if(!b.__paThemeBound){
+      b.addEventListener('click',()=>{
+        const light=!document.body.classList.contains('light');
+        document.body.classList.toggle('light',light);
+        localStorage.setItem('pa_theme',light?'light':'dark');
+        updateThemeLabel();
+      });
+      b.__paThemeBound=true;
     }
     updateThemeLabel();
   }
@@ -96,10 +104,9 @@
     installThemeCss();
     applyTheme();
     addThemeToggle();
-    updateThemeLabel();
     fix();
     watchGame();
-    if(!isAdmin){setTimeout(()=>{applyTheme();updateThemeLabel()},50)}
+    if(!isAdmin)setTimeout(()=>{applyTheme();updateThemeLabel()},50);
   }
   window.addEventListener('load',()=>{setTimeout(loadAccountFix,0);setTimeout(start,30);setTimeout(fix,100);setTimeout(watchGame,120)});
   window.addEventListener('pa-auth-updated',()=>{fix();hideConnectedPseudo();addThemeToggle();updateThemeLabel()});
