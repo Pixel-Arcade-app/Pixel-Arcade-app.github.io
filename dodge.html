@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#070a12">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Pixel Dodge — Pixel Arcade</title>
+<style>
+:root{--accent:#38bdf8;--accent2:#60a5fa}
+body{min-height:100vh;margin:0;background:#070a12;color:#eef2ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.game-shell{width:min(1050px,calc(100% - 32px));margin:24px auto 50px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}.top h1{margin:0}.top p{margin:4px 0;color:#9aa7bd}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid #334155;background:#111827;color:inherit;padding:10px 15px;border-radius:10px;text-decoration:none;cursor:pointer;font-weight:700}.btn:hover{border-color:#60a5fa}.primary{border:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#06101d;padding:11px 17px;border-radius:10px;font-weight:800;cursor:pointer}
+.panel{background:#0d1422;border:1px solid #26344a;border-radius:18px;padding:18px;box-shadow:0 12px 35px #0004}.hud{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}.stat{background:#111a2b;border:1px solid #2a3a53;border-radius:10px;padding:9px 13px}.stat b{font-size:1.15rem}.stat span{color:#93a4bd;margin-left:5px}
+#gameCanvas{display:block;width:100%;max-width:900px;height:auto;aspect-ratio:16/9;margin:auto;background:#050914;border:1px solid #26344a;border-radius:14px;touch-action:none}
+.help{text-align:center;color:#9aa7bd;margin:12px 0 2px}.result{display:none;text-align:center;margin-top:16px}.result.show{display:block}.result h2{margin:0 0 6px}.result input{width:min(340px,100%);box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #475569;background:#111827;color:#fff;margin:10px 0}.message{min-height:24px;color:#9aa7bd}
+.rank h2{margin-top:0}.rank-list{display:grid;gap:7px}.rank-row{display:flex;justify-content:space-between;padding:10px 12px;background:#111a2b;border:1px solid #26344a;border-radius:9px}.rank-row strong{color:#60a5fa}.empty{color:#9aa7bd}
+body.light{background:#f3f6fb;color:#172033}body.light .panel{background:#fff;border-color:#d3ddea;box-shadow:0 10px 28px #26375412}body.light .stat,body.light .rank-row{background:#f6f8fc;border-color:#dbe2eb}body.light .stat span,body.light .top p,.help,.empty,.message{color:#5b6b82}body.light .btn{background:#fff;color:#172033;border-color:#cbd5e1}body.light #gameCanvas{border-color:#cbd5e1}
+</style>
+</head>
+<body data-game="dodge">
+<main class="game-shell">
+<section class="top"><div><h1>Pixel Dodge</h1><p>Évite les blocs et tiens le plus longtemps possible.</p></div><div class="actions"><a class="btn" href="./index.html">← Accueil</a><button class="btn" id="restart">↻ Recommencer</button></div></section>
+<section class="panel">
+<div class="hud"><div class="stat"><b id="score">0</b><span>points</span></div><div class="stat"><b id="time">0.0</b><span>secondes</span></div><div class="stat"><b id="best">0</b><span>record local</span></div></div>
+<canvas id="gameCanvas" width="900" height="506" aria-label="Zone de jeu Pixel Dodge"></canvas>
+<p class="help">Déplace le carré bleu avec ← → ou A/D. Sur écran tactile, glisse sur la zone de jeu.</p>
+<div class="result" id="result"><h2>Partie terminée</h2><p>Score : <strong id="finalScore">0</strong></p><input id="pseudo" maxlength="20" placeholder="Ton pseudo" autocomplete="nickname"><br><button class="primary" id="save">Enregistrer le score</button><button class="btn" id="again">Rejouer</button><p class="message" id="message"></p></div>
+</section>
+<section class="panel rank" style="margin-top:16px"><h2>🏆 Classement — Pixel Dodge</h2><div id="ranking" class="rank-list"><p class="empty">Chargement…</p></div></section>
+</main>
+<script src="./config.js"></script>
+<script src="./auth.js"></script>
+<script src="./auth-v2.js"></script>
+<script src="./site-fix.js"></script>
+<script>
+(()=>{
+const c=document.getElementById('gameCanvas'),x=c.getContext('2d'),W=c.width,H=c.height;
+const scoreEl=document.getElementById('score'),timeEl=document.getElementById('time'),bestEl=document.getElementById('best');
+const result=document.getElementById('result'),finalScore=document.getElementById('finalScore'),pseudo=document.getElementById('pseudo'),message=document.getElementById('message'),ranking=document.getElementById('ranking');
+let player,blocks,score,start,last,raf,running,keys={},touchX=null;
+const localKey='pixelDodgeBest';
+function best(){return Number(localStorage.getItem(localKey)||0)}
+function reset(){cancelAnimationFrame(raf);player={x:W/2-16,y:H-62,w:32,h:32,speed:7};blocks=[];score=0;start=performance.now();last=start;running=true;result.classList.remove('show');message.textContent='';pseudo.value=(window.PAAuth?.currentPseudo?.()||'');bestEl.textContent=best();raf=requestAnimationFrame(loop)}
+function spawn(){const w=24+Math.random()*55;blocks.push({x:Math.random()*(W-w),y:-50,w,h:18+Math.random()*32,s:3.2+Math.min(score/500,4)+Math.random()*2})}
+function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function end(){running=false;cancelAnimationFrame(raf);finalScore.textContent=Math.floor(score);const b=best();if(score>b)localStorage.setItem(localKey,String(Math.floor(score)));bestEl.textContent=Math.max(b,Math.floor(score));result.classList.add('show');setTimeout(()=>pseudo.focus(),80);loadRanking()}
+function loop(t){if(!running)return;const dt=Math.min(32,t-last);last=t;const elapsed=(t-start)/1000;timeEl.textContent=elapsed.toFixed(1);score+=dt*.075*(1+elapsed/35);scoreEl.textContent=Math.floor(score);
+if(Math.random()<Math.min(.035,.012+elapsed/3500))spawn();
+if(keys.ArrowLeft||keys.a)player.x-=player.speed*(dt/16);if(keys.ArrowRight||keys.d)player.x+=player.speed*(dt/16);if(touchX!==null)player.x+=(touchX-(player.x+player.w/2))*.12;
+player.x=Math.max(0,Math.min(W-player.w,player.x));blocks.forEach(b=>b.y+=b.s*(dt/16));blocks=blocks.filter(b=>b.y<H+60);if(blocks.some(b=>hit(player,b))){end();draw();return}draw();raf=requestAnimationFrame(loop)}
+function draw(){x.clearRect(0,0,W,H);const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#08101e');g.addColorStop(1,'#050914');x.fillStyle=g;x.fillRect(0,0,W,H);x.strokeStyle='#142238';x.globalAlpha=.7;for(let gx=0;gx<W;gx+=45){x.beginPath();x.moveTo(gx,0);x.lineTo(gx,H);x.stroke()}for(let gy=0;gy<H;gy+=45){x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke()}x.globalAlpha=1;blocks.forEach(b=>{x.fillStyle='#fb7185';x.fillRect(b.x,b.y,b.w,b.h);x.fillStyle='#fecdd3';x.fillRect(b.x+4,b.y+4,Math.max(2,b.w-8),3)});x.fillStyle='#38bdf8';x.fillRect(player.x,player.y,player.w,player.h);x.fillStyle='#dbeafe';x.fillRect(player.x+8,player.y+7,5,5);x.fillRect(player.x+19,player.y+7,5,5)}
+window.addEventListener('keydown',e=>{keys[e.key]=true;if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault()});window.addEventListener('keyup',e=>keys[e.key]=false);
+c.addEventListener('pointerdown',e=>{c.setPointerCapture(e.pointerId);const r=c.getBoundingClientRect();touchX=(e.clientX-r.left)*W/r.width});c.addEventListener('pointermove',e=>{if(e.buttons){const r=c.getBoundingClientRect();touchX=(e.clientX-r.left)*W/r.width}});c.addEventListener('pointerup',()=>touchX=null);c.addEventListener('pointercancel',()=>touchX=null);
+document.getElementById('restart').onclick=reset;document.getElementById('again').onclick=reset;
+document.getElementById('save').onclick=async()=>{const p=(pseudo.value||window.PAAuth?.currentPseudo?.()||'Joueur').trim();if(!/^[A-Za-z0-9À-ÿ _-]{3,20}$/.test(p)){message.textContent='Pseudo : 3 à 20 caractères.';return}const btn=document.getElementById('save');btn.disabled=true;message.textContent='Enregistrement…';try{let saved=false;if(window.PAAuth?.recordScore&&window.PAAuth?.isOnline?.()){saved=await window.PAAuth.recordScore('dodge',Math.floor(score),1,p)}let rows=JSON.parse(localStorage.getItem('pixelDodgeScores')||'[]');rows.push({pseudo:p,score:Math.floor(score),date:Date.now()});rows.sort((a,b)=>b.score-a.score);localStorage.setItem('pixelDodgeScores',JSON.stringify(rows.slice(0,10)));message.textContent=saved?'✓ Score enregistré dans le classement.':'✓ Score enregistré sur cet appareil.';loadRanking()}catch(e){message.textContent='Le score a été conservé sur cet appareil.'}finally{btn.disabled=false}};
+async function loadRanking(){let rows=[];try{if(window.PAAuth?.recordScore&&window.PAAuth?.isOnline?.()){const cfg=window.PIXEL_ARCADE_CONFIG||{};const s=window.PAAuth.state;const token=s?.user?.access_token||cfg.supabaseAnonKey;const r=await fetch(cfg.supabaseUrl+'/rest/v1/scores?game=eq.dodge&select=pseudo,score&order=score.desc&limit=10',{headers:{apikey:cfg.supabaseAnonKey,Authorization:'Bearer '+token}});if(r.ok)rows=await r.json()}}catch{}if(!rows.length)try{rows=JSON.parse(localStorage.getItem('pixelDodgeScores')||'[]')}catch{}ranking.innerHTML=rows.length?rows.map((r,i)=>`<div class="rank-row"><span><b>#${i+1}</b> ${String(r.pseudo||'Joueur').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span><strong>${Number(r.score)||0}</strong></div>`).join(''):'<p class="empty">Aucun score pour le moment.</p>'}
+reset();loadRanking();
+})();
+</script>
+</body>
+</html>
