@@ -2,36 +2,45 @@
   if(window.PABackgroundMusic)return;
   let ac=null,master=null,timer=null,playing=false,step=0;
   const key='paMusic';
-  // Registre plus grave, pensé pour évoquer un piano feutré.
+  // Petite boucle rétro/lo-fi, grave et chaleureuse.
   const scale=[130.81,146.83,164.81,196,220,261.63,293.66,329.63];
   const melody=[0,2,4,7,4,2,5,3,0,4,2,7,5,4,2,1];
   function make(){
     if(ac)return;
     ac=new(window.AudioContext||window.webkitAudioContext)();
-    master=ac.createGain();master.gain.value=.085;master.connect(ac.destination);
+    master=ac.createGain();master.gain.value=.075;master.connect(ac.destination);
   }
   function pianoTone(freq,duration,volume,when,pan=0){
-    // Deux harmoniques + attaque douce pour un timbre plus proche d'une corde de piano.
     const p=ac.createStereoPanner();p.pan.value=pan;p.connect(master);
-    [[1,.72],[2,.20],[3,.08]].forEach(([mul,amp],j)=>{
+    [[1,.72],[2,.17],[3,.055],[4,.02]].forEach(([mul,amp],j)=>{
       const o=ac.createOscillator(),g=ac.createGain();
       o.type=j===0?'triangle':'sine';o.frequency.value=freq*mul;
-      const attack=j===0?.008:.012;
       g.gain.setValueAtTime(.0001,when);
-      g.gain.exponentialRampToValueAtTime(volume*amp,when+attack);
-      g.gain.exponentialRampToValueAtTime(volume*amp*.32,when+duration*.28);
+      g.gain.exponentialRampToValueAtTime(volume*amp,when+.009);
+      g.gain.exponentialRampToValueAtTime(volume*amp*.20,when+duration*.30);
       g.gain.exponentialRampToValueAtTime(.0001,when+duration);
-      o.connect(g);g.connect(p);o.start(when);o.stop(when+duration+.02);
+      o.connect(g);g.connect(p);o.start(when);o.stop(when+duration+.04);
     });
+  }
+  function loFiKick(when){
+    const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(75,when);o.frequency.exponentialRampToValueAtTime(42,when+.13);g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(.045,when+.008);g.gain.exponentialRampToValueAtTime(.0001,when+.16);o.connect(g);g.connect(master);o.start(when);o.stop(when+.18);
+  }
+  function loFiHat(when){
+    const b=ac.createBuffer(1,Math.floor(ac.sampleRate*.035),ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/d.length*7);
+    const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=b;f.type='highpass';f.frequency.value=4500;g.gain.value=.012;s.connect(f);f.connect(g);g.connect(master);s.start(when);
   }
   function note(){
     if(!playing||!ac)return;
     const now=ac.currentTime,i=step%melody.length,root=scale[melody[i]];
-    const pan=(i%4-1.5)*.16;
-    pianoTone(root*(step%8===7?2:1),.78,.19,now,pan);
-    if(i%4===0)pianoTone(root/2,.95,.075,now-.01,-pan*.65);
-    if(i%4===0)pianoTone(root*1.5,.72,.045,now+.015,-pan);
-    step++;timer=setTimeout(note,520+Math.random()*45);
+    const pan=(i%4-1.5)*.20;
+    pianoTone(root*(step%8===7?2:1),.95,.17,now,pan);
+    if(i%4===0){
+      pianoTone(root/2,1.15,.065,now,-pan*.55);
+      pianoTone(root*1.5,.88,.035,now+.025,-pan);
+      loFiKick(now);
+    }
+    if(i%2===0)loFiHat(now+.12);
+    step++;timer=setTimeout(note,560+Math.random()*55);
   }
   async function start(){try{make();if(ac.state==='suspended')await ac.resume();if(playing)return;playing=true;step=Math.floor(Math.random()*16);note();button()}catch{}}
   function stop(){playing=false;clearTimeout(timer);timer=null;button()}
