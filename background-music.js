@@ -4,30 +4,38 @@
   const key='paMusic';
   const scale=[261.63,293.66,329.63,392,440,523.25,587.33,659.25];
   const melody=[0,2,4,7,4,2,5,3,0,4,2,7,5,4,2,1];
-  function make(){if(ac)return;ac=new(window.AudioContext||window.webkitAudioContext)();master=ac.createGain();master.gain.value=.10;master.connect(ac.destination)}
-  function tone(freq,duration,type,volume,when){
-    const o=ac.createOscillator(),g=ac.createGain();
-    o.type=type;o.frequency.value=freq;
-    g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(volume,when+.018);g.gain.exponentialRampToValueAtTime(.0001,when+duration-.025);
-    o.connect(g);g.connect(master);o.start(when);o.stop(when+duration);
+  function make(){
+    if(ac)return;
+    ac=new(window.AudioContext||window.webkitAudioContext)();
+    master=ac.createGain();
+    master.gain.value=.085;
+    master.connect(ac.destination);
   }
-  function chord(root,when){
-    tone(root,.48,'sine',.035,when);
-    tone(root*1.25,.42,'triangle',.018,when+.01);
-    tone(root*1.5,.42,'triangle',.014,when+.01);
+  function piano(freq,duration,volume,pan,when){
+    const p=ac.createStereoPanner(),g=ac.createGain(),o1=ac.createOscillator(),o2=ac.createOscillator(),o3=ac.createOscillator();
+    const peak=Math.max(.0001,volume);
+    o1.type='sine';o2.type='sine';o3.type='triangle';
+    o1.frequency.value=freq;o2.frequency.value=freq*2;o3.frequency.value=freq*3;
+    p.pan.value=pan;
+    g.gain.setValueAtTime(.0001,when);
+    g.gain.exponentialRampToValueAtTime(peak,when+.008);
+    g.gain.exponentialRampToValueAtTime(peak*.34,when+.18);
+    g.gain.exponentialRampToValueAtTime(.0001,when+duration);
+    o1.connect(g);o2.connect(g);o3.connect(g);g.connect(p);p.connect(master);
+    o1.start(when);o2.start(when);o3.start(when);
+    o1.stop(when+duration+.03);o2.stop(when+duration+.03);o3.stop(when+duration+.03);
   }
   function note(){
     if(!playing||!ac)return;
-    const now=ac.currentTime, i=step%melody.length, root=scale[melody[i]];
-    // Mélodie principale : son doux type synthé.
-    tone(root*(step%8===7?2:1),.28,'triangle',.27,now);
-    // Petite basse régulière.
-    if(i%4===0)tone(root/2,.42,'sine',.11,now);
-    // Accords d'accompagnement, toutes les 4 notes.
-    if(i%4===0)chord(root,now);
-    // Petite percussion synthétique sans samples externes.
-    if(i%2===0)tone(90,.055,'square',.025,now);
-    step++;timer=setTimeout(note,300+Math.random()*35);
+    const now=ac.currentTime,i=step%melody.length,root=scale[melody[i]];
+    const pan=Math.sin(step*.82)*.55;
+    // Son principal façon piano : plusieurs harmoniques, sans ancien instrument synthé.
+    piano(root*(step%8===7?2:1),.62,.20,pan,now);
+    // Réponse stéréo très légère, une octave au-dessus.
+    if(i%4===2)piano(root*2,.38,.055,-pan,now+.055);
+    // Basse douce façon piano grave.
+    if(i%4===0)piano(root/2,.78,.055,-pan*.55,now);
+    step++;timer=setTimeout(note,360+Math.random()*30);
   }
   async function start(){try{make();if(ac.state==='suspended')await ac.resume();if(playing)return;playing=true;step=Math.floor(Math.random()*16);note();button()}catch{}}
   function stop(){playing=false;clearTimeout(timer);timer=null;button()}
