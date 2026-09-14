@@ -29,8 +29,8 @@
       function make(){if(ac)return;ac=new(window.AudioContext||window.webkitAudioContext)();master=ac.createGain();master.gain.value=.045;master.connect(ac.destination)}
       function tone(f,d,v,type,when){const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(v,when+.015);g.gain.exponentialRampToValueAtTime(.0001,when+d-.02);o.connect(g);g.connect(master);o.start(when);o.stop(when+d)}
       function tick(){if(!on||!ac)return;const t=ac.currentTime,n=melody[step%melody.length];tone(n,.25,.20,'triangle',t);if(step%4===0){tone(n/2,.38,.07,'sine',t);tone(n*1.5,.3,.035,'sine',t)}if(step%2===0)tone(85,.045,.012,'square',t);step++;timer=setTimeout(tick,300+Math.random()*35)}
-      async function start(){try{make();if(ac.state==='suspended')await ac.resume();if(on)return;on=true;step=Math.floor(Math.random()*melody.length);tick();updateMusic()}catch{}}
-      function stop(){on=false;clearTimeout(timer);timer=null;updateMusic()}
+      async function start(){try{make();if(ac.state==='suspended')await ac.resume();if(on)return;on=true;step=Math.floor(Math.random()*melody.length);tick();updateMusic();localStorage.setItem('pixelDodgeMusic','on')}catch{}}
+      function stop(){on=false;clearTimeout(timer);timer=null;updateMusic();localStorage.setItem('pixelDodgeMusic','off')}
       function updateMusic(){music.textContent=on?'♫ Musique : activée':'♫ Musique : désactivée';music.classList.toggle('active',on)}
       music.onclick=()=>on?stop():start();
       if(localStorage.getItem('pixelDodgeMusic')==='on'){const once=()=>{start();window.removeEventListener('pointerdown',once);window.removeEventListener('keydown',once)};window.addEventListener('pointerdown',once,{once:true});window.addEventListener('keydown',once,{once:true})}
