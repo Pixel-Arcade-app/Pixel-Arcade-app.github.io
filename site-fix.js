@@ -47,6 +47,48 @@
       html[data-pa-theme="light"] .settings-panel input,html[data-pa-theme="light"] .settings-panel select{background:#fff!important;color:#111827!important;border-color:#cbd5e1!important;color-scheme:light}
       html[data-pa-theme="light"] .settings-panel .palette-choice{background:#fff!important;color:#111827!important;border-color:#cbd5e1!important}
       html[data-pa-theme="light"] .settings-panel .secondary{background:#fff!important;color:#111827!important}
+
+      /* Pixel Dodge: neutralise les anciennes règles globales de style.css
+         qui ciblent aussi .game/.hud/.stat. */
+      body[data-game="dodge"] .game{
+        display:block!important;
+        position:relative!important;
+        width:100%!important;
+        height:auto!important;
+        min-height:0!important;
+        margin:0!important;
+        padding:0!important;
+        overflow:hidden!important;
+      }
+      body[data-game="dodge"] .hud{
+        position:static!important;
+        inset:auto!important;
+        top:auto!important;
+        right:auto!important;
+        bottom:auto!important;
+        left:auto!important;
+        z-index:auto!important;
+        display:flex!important;
+        flex-direction:column!important;
+        gap:7px!important;
+        width:auto!important;
+        height:auto!important;
+        margin:0!important;
+        padding:0!important;
+        font-size:inherit!important;
+        font-weight:normal!important;
+        color:inherit!important;
+      }
+      body[data-game="dodge"] .layout{position:relative!important;align-items:start!important}
+      body[data-game="dodge"] .stage{min-width:0!important}
+      body[data-game="dodge"] .stat{position:static!important;display:block!important;width:auto!important;min-width:0!important;min-height:0!important;margin:0!important;transform:none!important;}
+      body[data-game="dodge"] .mission{position:static!important;width:auto!important;margin:0!important;}
+      body[data-game="dodge"] .description{position:relative!important}
+      body[data-game="dodge"] #gamePanel{overflow:hidden!important}
+      body[data-game="dodge"] #gamePanel:fullscreen{overflow:auto!important}
+      body[data-game="dodge"] #gamePanel:fullscreen .layout{height:min(850px,90vh)!important;max-width:1500px!important}
+      body[data-game="dodge"] #gamePanel:fullscreen .hud{overflow:auto!important}
+      body[data-game="dodge"] .result{position:relative!important;z-index:2!important}
     `;
     document.head.appendChild(s);
   }
