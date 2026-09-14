@@ -44,6 +44,9 @@
       .pa-theme-fab{position:fixed;right:18px;top:18px;z-index:9998}
       @media(max-width:700px){.pa-theme-fab{right:12px;top:12px}.pa-theme-toggle{padding:7px 10px;font-size:12px}}
       .playing .pa-theme-fab{display:none}
+      html[data-pa-theme="light"] .settings-panel input,html[data-pa-theme="light"] .settings-panel select{background:#fff!important;color:#111827!important;border-color:#cbd5e1!important;color-scheme:light}
+      html[data-pa-theme="light"] .settings-panel .palette-choice{background:#fff!important;color:#111827!important;border-color:#cbd5e1!important}
+      html[data-pa-theme="light"] .settings-panel .secondary{background:#fff!important;color:#111827!important}
     `;
     document.head.appendChild(s);
   }
@@ -52,13 +55,15 @@
     document.body.classList.toggle('light',light);
     document.documentElement.dataset.paTheme=light?'light':'dark';
     localStorage.setItem('pa_theme',light?'light':'dark');
+    localStorage.setItem('paTheme',light?'light':'dark');
     updateThemeLabel();
+    syncProfileControls();
   }
 
   function applyTheme(){
     if(isAdmin){document.body.classList.remove('light');document.body.classList.add('pa-admin');document.documentElement.dataset.paTheme='dark';return}
     document.body.classList.remove('pa-admin');
-    const saved=localStorage.getItem('pa_theme');
+    const saved=localStorage.getItem('pa_theme')||localStorage.getItem('paTheme');
     setThemeState(saved!=='dark');
   }
 
@@ -86,6 +91,47 @@
     b.title=light?'Passer au mode sombre':'Passer au mode clair';
   }
 
+  function syncProfileControls(){
+    const root=document.getElementById('profilePage');if(!root)return;
+    const legacyTheme=localStorage.getItem('paTheme');
+    const currentTheme=localStorage.getItem('pa_theme');
+    if(!currentTheme&&legacyTheme)localStorage.setItem('pa_theme',legacyTheme);
+    const palette=localStorage.getItem('pa_palette')||localStorage.getItem('paPalette')||'violet';
+    localStorage.setItem('pa_palette',palette);
+    localStorage.setItem('paPalette',palette);
+    document.documentElement.dataset.paPalette=palette;
+    const theme=document.body.classList.contains('light')?'light':'dark';
+    const themeEl=document.getElementById('themeChoice');
+    if(themeEl&&themeEl.value!==theme)themeEl.value=theme;
+    document.querySelectorAll('.palette-choice').forEach(b=>b.classList.toggle('selected',b.dataset.palette===palette));
+  }
+
+  function watchProfileTheme(){
+    const root=document.getElementById('profilePage');if(!root||root.__paThemeWatch)return;root.__paThemeWatch=true;
+    const observer=new MutationObserver(()=>syncProfileControls());
+    observer.observe(root,{childList:true,subtree:true});
+    document.addEventListener('click',e=>{
+      const palette=e.target.closest?.('.palette-choice');
+      const save=e.target.closest?.('#saveTheme');
+      if(palette){
+        const value=palette.dataset.palette||'violet';
+        localStorage.setItem('pa_palette',value);localStorage.setItem('paPalette',value);
+        setTimeout(syncProfileControls,0);
+      }
+      if(save){
+        setTimeout(()=>{
+          const v=document.getElementById('themeChoice')?.value||'dark';
+          const resolved=v==='dark'?'dark':'light';
+          localStorage.setItem('pa_theme',resolved);localStorage.setItem('paTheme',resolved);
+          document.body.classList.toggle('light',resolved==='light');
+          document.documentElement.dataset.paTheme=resolved;
+          syncProfileControls();
+        },0);
+      }
+    },true);
+    syncProfileControls();
+  }
+
   function fix(){
     document.querySelectorAll('a[href="./profil.html"],a[href="profil.html"]').forEach(a=>a.href='./profile.html');
     const head=document.querySelector('.head-actions');
@@ -110,9 +156,10 @@
     addThemeToggle();
     fix();
     watchGame();
+    watchProfileTheme();
   }
-  window.addEventListener('load',()=>{setTimeout(loadAccountFix,0);setTimeout(start,30);setTimeout(fix,100);setTimeout(watchGame,120)});
-  window.addEventListener('pa-auth-updated',()=>{fix();hideConnectedPseudo();addThemeToggle();updateThemeLabel()});
-  window.addEventListener('pa-auth-ready',()=>{fix();hideConnectedPseudo();addThemeToggle();updateThemeLabel()});
-  setTimeout(loadAccountFix,600);setTimeout(start,700);setTimeout(fix,800);setTimeout(watchGame,850);
+  window.addEventListener('load',()=>{setTimeout(loadAccountFix,0);setTimeout(start,30);setTimeout(fix,100);setTimeout(watchGame,120);setTimeout(watchProfileTheme,150)});
+  window.addEventListener('pa-auth-updated',()=>{fix();hideConnectedPseudo();addThemeToggle();updateThemeLabel();syncProfileControls()});
+  window.addEventListener('pa-auth-ready',()=>{fix();hideConnectedPseudo();addThemeToggle();updateThemeLabel();syncProfileControls()});
+  setTimeout(loadAccountFix,600);setTimeout(start,700);setTimeout(fix,800);setTimeout(watchGame,850);setTimeout(watchProfileTheme,900);
 })();
