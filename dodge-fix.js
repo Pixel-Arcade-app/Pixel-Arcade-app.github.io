@@ -71,6 +71,17 @@
     const observer=new MutationObserver(moveResult);observer.observe(panel,{childList:true,subtree:true});
     const resize=()=>{if(document.fullscreenElement===panel){c.style.maxHeight='calc(100vh - 150px)'}else c.style.maxHeight='none'};document.addEventListener('fullscreenchange',resize);resize();
     c.addEventListener('pointerdown',vibrate,{passive:true});
+
+    // Après une partie, « Rejouer » revient au choix de difficulté au lieu de relancer directement.
+    const chooseDifficulty=()=>{
+      result.classList.remove('show');
+      result.style.display='none';
+      overlay.classList.remove('hidden');
+      overlay.style.display='flex';
+      overlay.scrollIntoView({block:'center',behavior:'smooth'});
+      document.querySelectorAll('#startOverlay .difficulty button').forEach(b=>b.focus?.());
+    };
+    ['again','againAuto'].forEach(id=>document.getElementById(id)?.addEventListener('click',chooseDifficulty,true));
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
 })();
