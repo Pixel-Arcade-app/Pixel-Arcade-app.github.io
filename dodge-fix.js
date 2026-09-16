@@ -155,7 +155,6 @@
       if(e.key.toLowerCase()==='r'&&result.classList.contains('show')&&!/input|textarea|select/i.test(document.activeElement?.tagName||'')){e.preventDefault();chooseDifficulty()}
     });
 
-    // Glissement tactile : pratique quand les boutons sont trop petits ou masqués par le doigt.
     let touchX=0,touchStart=0;
     c.addEventListener('touchstart',e=>{const t=e.changedTouches[0];touchX=t.clientX;touchStart=performance.now()},{passive:true});
     c.addEventListener('touchend',e=>{
@@ -164,8 +163,15 @@
       key(dx<0?'ArrowLeft':'ArrowRight','keydown');setTimeout(()=>key(dx<0?'ArrowLeft':'ArrowRight','keyup'),100);
     },{passive:true});
 
-    // Empêche les doubles activations accidentelles sur écran tactile.
     document.addEventListener('dblclick',e=>{if(e.target.closest('#gamePanel'))e.preventDefault()},{passive:false});
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
 })();
+
+// Extension de contenu gameplay : défis, succès et progression locale.
+if(document.body?.dataset.game==='dodge'&&!document.getElementById('dodgeContentLoader')){
+  const s=document.createElement('script');
+  s.id='dodgeContentLoader';
+  s.src='./dodge-content.js?v=1';
+  document.head.appendChild(s);
+}
