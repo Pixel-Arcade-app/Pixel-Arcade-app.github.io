@@ -37,22 +37,22 @@
       document.getElementById('score').textContent=Math.floor(fbScore);document.getElementById('time').textContent=elapsed.toFixed(1);document.getElementById('level').textContent=1+Math.floor(elapsed/15);document.getElementById('combo').textContent='x'+Math.min(10,1+Math.floor(elapsed/8));document.getElementById('lives').textContent='♥'.repeat(Math.max(0,fbLives))||'0';document.getElementById('wave').textContent=fbWave;document.getElementById('dash').textContent=Math.max(0,Math.floor((1-Math.min(1,fbDash/.35))*100))+'%';frame=requestAnimationFrame(fallbackLoop)};
     const fallbackEnd=elapsed=>{fallback=false;cancelAnimationFrame(frame);document.documentElement.dataset.dodgeFallback='';document.getElementById('finalScore').textContent=Math.floor(fbScore);document.getElementById('finalTime').textContent=elapsed.toFixed(1);document.getElementById('finalWave').textContent=fbWave;result.classList.add('show');result.style.display='flex';result.style.position='absolute';result.style.inset='0'};
     function drawPolishedShip(cx,cy,inv=false){const t=performance.now();ctx.save();ctx.translate(cx,cy);ctx.globalAlpha=inv&&Math.floor(t/80)%2?0.35:1;ctx.shadowColor='#22d3ee';ctx.shadowBlur=26;ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.moveTo(0,-34);ctx.lineTo(25,20);ctx.lineTo(10,15);ctx.lineTo(0,31);ctx.lineTo(-10,15);ctx.lineTo(-25,20);ctx.closePath();ctx.fill();ctx.shadowBlur=10;ctx.fillStyle='#e0f2fe';ctx.beginPath();ctx.moveTo(0,-19);ctx.lineTo(10,7);ctx.lineTo(0,12);ctx.lineTo(-10,7);ctx.closePath();ctx.fill();ctx.fillStyle='#0f172a';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#67e8f9';ctx.fillRect(-18,18,8,7);ctx.fillRect(10,18,8,7);ctx.shadowColor='#facc15';ctx.shadowBlur=16;ctx.fillStyle='#facc15';ctx.beginPath();ctx.moveTo(-13,27);ctx.lineTo(-5,27);ctx.lineTo(-9,43);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(5,27);ctx.lineTo(13,27);ctx.lineTo(9,43);ctx.closePath();ctx.fill();ctx.restore()}
-    const toggleFallbackPause=()=>{if(!fallback)return false;fbPaused=!fbPaused;document.getElementById('pauseOverlay').classList.toggle('hidden',!fbPaused);if(!fbPaused){document.getElementById('pauseOverlay').classList.add('hidden')}return true};
+    const toggleFallbackPause=()=>{if(!fallback)return false;fbPaused=!fbPaused;document.getElementById('pauseOverlay').classList.toggle('hidden',!fbPaused);return true};
     start.addEventListener('click',()=>{setTimeout(hideStart,80);startWatchdog()},{capture:true});
     const moveResult=()=>{if(result.parentElement!==wrap)wrap.appendChild(result);result.style.position='absolute';result.style.inset='0'};moveResult();new MutationObserver(moveResult).observe(panel||wrap,{childList:true,subtree:true});
     const controls=document.createElement('div');controls.className='dodge-mobile-controls';controls.innerHTML='<button data-key="ArrowLeft">◀ Gauche</button><button data-dash>⚡ Dash</button><button data-key="ArrowRight">Droite ▶</button><button class="pause">⏸ Pause / Reprendre</button>';wrap.appendChild(controls);
-    const key=(k,type)=>window.dispatchEvent(new KeyboardEvent(type,{key:k,bubbles:true}));controls.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();key(k,'keydown')});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>key(k,'keyup')))});const db=controls.querySelector('[data-dash');
-    controls.querySelector('[data-dash]').addEventListener('pointerdown',e=>{e.preventDefault();key('Shift','keydown')});['pointerup','pointercancel','pointerleave'].forEach(t=>controls.querySelector('[data-dash]').addEventListener(t,()=>key('Shift','keyup')));
+    const key=(k,type)=>window.dispatchEvent(new KeyboardEvent(type,{key:k,bubbles:true}));controls.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();key(k,'keydown')});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>key(k,'keyup')))});
+    const db=controls.querySelector('[data-dash]');db.addEventListener('pointerdown',e=>{e.preventDefault();key('Shift','keydown')});['pointerup','pointercancel','pointerleave'].forEach(t=>db.addEventListener(t,()=>key('Shift','keyup')));
     const pauseBtn=document.getElementById('pause'),resumeBtn=document.getElementById('resume');
-    const requestCorePause=()=>{if(fallback)return toggleFallbackPause();if(!document.getElementById('pauseOverlay').classList.contains('hidden')){window.dispatchEvent(new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true}));return true}window.dispatchEvent(new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true}));return true};
+    const requestCorePause=()=>{if(fallback)return toggleFallbackPause();window.dispatchEvent(new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true}));return true};
     pauseBtn?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();requestCorePause()},{capture:true});
     resumeBtn?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();requestCorePause()},{capture:true});
     controls.querySelector('.pause').onclick=()=>requestCorePause();
     c.style.touchAction='none';c.tabIndex=0;c.setAttribute('role','application');c.addEventListener('contextmenu',e=>e.preventDefault());
     document.addEventListener('keydown',e=>{if(panel?.contains(e.target)&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' ','Shift'].includes(e.key))e.preventDefault()});
-    document.addEventListener('visibilitychange',()=>{if(document.hidden&&!fallback&&!document.getElementById('pauseOverlay').classList.contains('hidden'))return;if(document.hidden)requestCorePause()});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)requestCorePause()});
     document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='r'&&result.classList.contains('show')&&!/input|textarea|select/i.test(document.activeElement?.tagName||'')){e.preventDefault();document.getElementById('again')?.click()}});
-    window.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect();pointer={x:(e.clientX-r.left)/r.width*1280,y:(e.clientY-r.top)/r.height*720};if(fallback)pointer=pointer.x});
+    window.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect();pointer=(e.clientX-r.left)/r.width*1280});
     window.addEventListener('keydown',e=>{keys[e.key]=true;if(e.key==='Shift'&&fallback&&fbDash<=0)fbDash=.35});window.addEventListener('keyup',e=>{keys[e.key]=false});
     document.getElementById('restart')?.addEventListener('click',()=>setTimeout(()=>{if(n('time')<0.15)fallbackReset()},700));
     document.getElementById('again')?.addEventListener('click',()=>{result.classList.remove('show');result.style.display='none';showStart();fallback=false;document.documentElement.dataset.dodgeFallback=''});
@@ -72,7 +72,7 @@
       await new Promise(r=>setTimeout(r,650));
       try{
         const rows=JSON.parse(localStorage.getItem('pixelArcadeScores')||'[]');
-        const existing=rows.find(r=>r.game==='dodge'&&Number(r.score)===score&&r.user_id===info.s.user.user.id&&r.synced===true);
+        const existing=rows.find(r=>r.game==='dodge'&&Number(r.score)===score&&r.user_id===info.s.user.id&&r.synced===true);
         let ok=!!existing;
         if(!ok&&window.PAAuth?.recordScore)ok=await window.PAAuth.recordScore('dodge',score,1,info.p);
         if(ok){saveStatus.className='dodge-save-status ok';saveStatus.textContent='✓ Score enregistré sur ton compte.';document.getElementById('manualScore')?.classList.add('hidden');document.getElementById('autoScore')?.classList.remove('hidden');lastSavedKey=key}
@@ -81,7 +81,7 @@
       finally{saving=false}
     };
     new MutationObserver(()=>{if(result.classList.contains('show'))ensureAccountScore()}).observe(result,{attributes:true,attributeFilter:['class']});
-    document.getElementById('save')?.addEventListener('click',async()=>{setTimeout(ensureAccountScore,200)},{capture:false});
+    document.getElementById('save')?.addEventListener('click',()=>setTimeout(ensureAccountScore,200));
     window.addEventListener('error',e=>{if(!fallback&&overlay.classList.contains('hidden')&&!result.classList.contains('show')&&n('time')<0.15){console.error('[Pixel Dodge] runtime error',e.error||e.message);setTimeout(()=>{if(!fallback&&n('time')<0.15)fallbackReset()},120)}});
     if(!document.getElementById('dodgeContentLoader')){const s=document.createElement('script');s.id='dodgeContentLoader';s.src='./dodge-content.js?v=5';document.head.appendChild(s)}
   };
