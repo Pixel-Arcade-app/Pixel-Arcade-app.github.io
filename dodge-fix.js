@@ -40,6 +40,7 @@
         #gamePanel aside.hud .stat b{font-size:1.05rem!important;line-height:1.15!important}
         #gamePanel aside.hud .stat span{font-size:.68rem!important;line-height:1.1!important}
         #gamePanel aside.hud .mission{grid-column:1/-1!important;width:auto!important;min-height:0!important;padding:8px!important}
+        #gamePanel aside.hud .mission small{font-size:.68rem!important}
         #gamePanel .tools{display:flex!important;justify-content:center!important;margin-top:7px!important}
         #gamePanel .tools .tool{min-height:44px!important;padding:9px 12px!important}
       }
@@ -175,3 +176,61 @@ if(document.body?.dataset.game==='dodge'&&!document.getElementById('dodgeContent
   s.src='./dodge-content.js?v=1';
   document.head.appendChild(s);
 }
+
+// Couche de stabilité : gestion du focus, des raccourcis et du changement d’onglet.
+(()=>{
+  if(document.body?.dataset.game!=='dodge')return;
+  const boot=()=>{
+    const canvas=document.getElementById('gameCanvas');
+    const panel=document.getElementById('gamePanel');
+    const start=document.getElementById('start');
+    const pause=document.getElementById('pause');
+    const resume=document.getElementById('resume');
+    const result=document.getElementById('result');
+    if(!canvas||!panel)return;
+
+    canvas.style.touchAction='none';
+    canvas.setAttribute('tabindex','0');
+    canvas.setAttribute('role','application');
+    canvas.setAttribute('aria-label','Zone de jeu Pixel Dodge');
+    canvas.addEventListener('contextmenu',e=>e.preventDefault());
+
+    const focusGame=()=>{try{canvas.focus({preventScroll:true})}catch{try{canvas.focus()}catch{}}};
+    start?.addEventListener('click',()=>setTimeout(focusGame,80));
+    resume?.addEventListener('click',()=>setTimeout(focusGame,50));
+    pause?.addEventListener('click',()=>setTimeout(()=>{if(!document.getElementById('pauseOverlay')?.classList.contains('hidden'))document.getElementById('resume')?.focus();},30));
+
+    document.addEventListener('keydown',e=>{
+      if(!panel.contains(e.target))return;
+      const k=e.key;
+      if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' ','Shift'].includes(k)){e.preventDefault()}
+      if((k==='p'||k==='P')&&!/input|textarea|select/i.test(document.activeElement?.tagName||'')){e.preventDefault();pause?.click()}
+    },{passive:false});
+
+    let autoPaused=false;
+    const isActuallyPlaying=()=>{
+      const so=document.getElementById('startOverlay');
+      const po=document.getElementById('pauseOverlay');
+      return so&&!so.classList.contains('hidden')===false&&po?.classList.contains('hidden')&&!(result?.classList.contains('show'));
+    };
+    document.addEventListener('visibilitychange',()=>{
+      if(document.hidden){
+        if(isActuallyPlaying()&&pause){pause.click();autoPaused=true}
+      }else if(autoPaused){
+        autoPaused=false;
+        if(!result?.classList.contains('show')&&document.getElementById('startOverlay')?.classList.contains('hidden')){
+          document.getElementById('resume')?.click();
+          setTimeout(focusGame,60);
+        }
+      }
+    });
+
+    new MutationObserver(()=>{
+      if(result?.classList.contains('show')){
+        const input=document.getElementById('pseudo');
+        setTimeout(()=>input?.focus(),50);
+      }
+    }).observe(result||panel,{attributes:true,attributeFilter:['class']});
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
