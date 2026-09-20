@@ -143,6 +143,14 @@
   function handleKeyUp(e){keys[e.key]=false;keys[e.code]=false}
   window.addEventListener('keydown',handleKeyDown,{capture:true,passive:false});
   window.addEventListener('keyup',handleKeyUp,{capture:true,passive:false});
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){
+      if(running&&!paused) pause();
+    }
+  });
+  window.addEventListener('blur',()=>{
+    if(running&&!paused) pause();
+  });
   $('pause').onclick=e=>{e.preventDefault();pause()};
   $('resume').onclick=e=>{e.preventDefault();if(paused)pause()};
   const dashButton=$('dashBtn');
