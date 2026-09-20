@@ -71,7 +71,7 @@
     const before=player.x;
     player.x=Math.max(5,Math.min(W-player.w-5,player.x+d*300));
     burst(before+25,player.y+25,'#22d3ee',32);burst(player.x+25,player.y+25,'#67e8f9',32);
-    addText(player.x+25,player.y-18,'⚡ DASH','#67e8f9');tone?.(180,.08);
+    addText(player.x+25,player.y-18,'⚡ DASH','#67e8f9');
     return true;
   }
   function pause(){if(!running)return;paused=!paused;if(paused)pointerTarget=null;const po=$('pauseOverlay');po.classList.toggle('hidden',!paused);$('pause').textContent=paused?'▶ Reprendre':'Ⅱ Pause';if(paused){pausedAt=performance.now();cancelAnimationFrame(raf)}else{pausedTotal+=performance.now()-pausedAt;last=performance.now();raf=requestAnimationFrame(loop)}}
