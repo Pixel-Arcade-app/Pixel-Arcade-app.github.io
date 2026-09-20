@@ -1,1 +1,1 @@
-(()=>{if(document.body?.dataset.game!=='dodge')return;const s=document.createElement('script');s.src='dodge-final-v3.js?v=3.3';s.async=false;document.body.appendChild(s)})();
+(()=>{if(document.body?.dataset.game!=='dodge')return;const s=document.createElement('script');s.src='dodge-final-v3.js?v=3.4';s.async=false;document.body.appendChild(s)})();
