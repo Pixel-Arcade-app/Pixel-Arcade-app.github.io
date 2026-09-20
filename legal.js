@@ -1,6 +1,8 @@
 /* Pixel Arcade — pages légales, cookies et liens du footer. */
 (()=>{
   const COOKIE_NAME='pa_cookie_consent';
+  const readPrefs=()=>{try{const raw=getCookie(COOKIE_NAME);return raw?JSON.parse(raw):null}catch{return null}};
+  const savePrefs=(status,optional=false)=>setCookie(COOKIE_NAME,JSON.stringify({status,optional}));
   const setCookie=(name,value,maxAge=15552000)=>{document.cookie=name+'='+encodeURIComponent(value)+'; Max-Age='+maxAge+'; Path=/; SameSite=Lax; Secure'};
   const getCookie=name=>{const m=document.cookie.match(new RegExp('(?:^|; )'+name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'=([^;]*)'));return m?decodeURIComponent(m[1]):null};
   function addFooterLinks(){
@@ -16,12 +18,16 @@
     let b=document.getElementById('paCookieBanner');
     if(!b){
       b=document.createElement('section');b.id='paCookieBanner';b.className='cookie-banner';
-      b.innerHTML='<h2>Cookies et traceurs</h2><p>Pixel Arcade utilise un cookie nécessaire pour mémoriser ton choix concernant les cookies. Aucun cookie publicitaire ou de mesure d’audience n’est activé par défaut.</p><div class="cookie-actions"><button type="button" class="primary" data-cookie="accept">Tout accepter</button><button type="button" data-cookie="refuse">Tout refuser</button><button type="button" data-cookie="custom">Personnaliser</button></div><div class="cookie-settings"><div class="cookie-setting"><span>Cookies nécessaires<br><small>Indispensables au fonctionnement et à la mémorisation du choix.</small></span><input type="checkbox" checked disabled></div><div class="cookie-setting"><span>Mesure d’audience et publicité<br><small>Non utilisés actuellement.</small></span><input type="checkbox" disabled></div></div>';
+      b.innerHTML='<h2>Cookies et traceurs</h2><p>Pixel Arcade utilise un cookie nécessaire pour mémoriser ton choix concernant les cookies. Aucun cookie publicitaire ou de mesure d’audience n’est actuellement utilisé.</p><div class="cookie-actions"><button type="button" class="primary" data-cookie="accept">Tout accepter</button><button type="button" data-cookie="refuse">Tout refuser</button><button type="button" data-cookie="custom">Personnaliser</button><button type="button" data-cookie="save" class="save-custom">Enregistrer mes choix</button></div><div class="cookie-settings"><div class="cookie-setting"><span>Cookies nécessaires<br><small>Indispensables au fonctionnement et à la mémorisation du choix.</small></span><input type="checkbox" checked disabled></div><div class="cookie-setting"><span>Mesure d’audience et publicité<br><small>Actuellement non utilisés. Ton choix sera mémorisé.</small></span><input type="checkbox" data-cookie-optional></div></div>';
       document.body.appendChild(b);
-      b.querySelector('[data-cookie="accept"]').onclick=()=>{setCookie(COOKIE_NAME,'accepted');b.classList.remove('show')};
-      b.querySelector('[data-cookie="refuse"]').onclick=()=>{setCookie(COOKIE_NAME,'refused');b.classList.remove('show')};
-      b.querySelector('[data-cookie="custom"]').onclick=()=>b.querySelector('.cookie-settings').classList.toggle('show');
+      b.querySelector('[data-cookie="accept"]').onclick=()=>{savePrefs('accepted',true);b.classList.remove('show')};
+      b.querySelector('[data-cookie="refuse"]').onclick=()=>{savePrefs('refused',false);b.classList.remove('show')};
+      b.querySelector('[data-cookie="custom"]').onclick=()=>{b.querySelector('.cookie-settings').classList.add('show');b.querySelector('[data-cookie="save"]').focus()};
+      b.querySelector('[data-cookie="save"]').onclick=()=>{const optional=!!b.querySelector('[data-cookie-optional]').checked;savePrefs('custom',optional);b.classList.remove('show')};
     }
+    const prefs=readPrefs();
+    const optional=b.querySelector('[data-cookie-optional]');
+    if(optional)optional.checked=!!prefs?.optional;
     b.classList.add('show');
     if(settings)b.querySelector('.cookie-settings').classList.add('show');
   }
