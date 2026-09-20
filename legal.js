@@ -16,14 +16,22 @@
   }
   function showCookieBanner(settings=false){
     let b=document.getElementById('paCookieBanner');
-    if(b && b.dataset.paCookieUi!=='2.1'){b.remove();b=null}
+    if(b && b.dataset.paCookieUi!=='2.5'){b.remove();b=null}
     if(!b){
-      b=document.createElement('section');b.id='paCookieBanner';b.className='cookie-banner';b.dataset.paCookieUi='2.1';
+      b=document.createElement('section');b.id='paCookieBanner';b.className='cookie-banner';b.dataset.paCookieUi='2.5';
       b.innerHTML='<h2>Cookies et traceurs</h2><p>Pixel Arcade utilise un cookie nécessaire pour mémoriser ton choix concernant les cookies. Aucun cookie publicitaire ou de mesure d’audience n’est actuellement utilisé.</p><div class="cookie-actions"><button type="button" class="primary" data-cookie="accept">Tout accepter</button><button type="button" data-cookie="refuse">Tout refuser</button><button type="button" data-cookie="custom">Personnaliser</button><button type="button" data-cookie="save" class="save-custom">Enregistrer mes choix</button></div><div class="cookie-settings"><div class="cookie-setting"><span>Cookies nécessaires<br><small>Indispensables au fonctionnement et à la mémorisation du choix.</small></span><input type="checkbox" checked disabled></div><div class="cookie-setting"><span>Mesure d’audience et publicité<br><small>Actuellement non utilisés. Ton choix sera mémorisé.</small></span><input type="checkbox" data-cookie-optional></div></div>';
       document.body.appendChild(b);
       b.querySelector('[data-cookie="accept"]').onclick=()=>{savePrefs('accepted',true);b.classList.remove('show')};
       b.querySelector('[data-cookie="refuse"]').onclick=()=>{savePrefs('refused',false);b.classList.remove('show')};
-      b.querySelector('[data-cookie="custom"]').onclick=()=>{b.querySelector('.cookie-settings').classList.add('show');b.querySelector('[data-cookie="save"]').style.display='inline-flex';b.querySelector('[data-cookie="save"]').focus()};
+      b.querySelector('[data-cookie="custom"]').onclick=()=>{
+        const settingsBox=b.querySelector('.cookie-settings');
+        const save=b.querySelector('[data-cookie="save"]');
+        const open=!settingsBox.classList.contains('show');
+        settingsBox.classList.toggle('show',open);
+        save.style.display=open?'inline-flex':'none';
+        b.querySelector('[data-cookie="custom"]').textContent=open?'Masquer les options':'Personnaliser';
+        if(open)settingsBox.scrollIntoView({block:'nearest',behavior:'smooth'});
+      };
       b.querySelector('[data-cookie="save"]').onclick=()=>{const optional=!!b.querySelector('[data-cookie-optional]').checked;savePrefs('custom',optional);b.classList.remove('show')};
       b.querySelector('[data-cookie-optional]').addEventListener('change',e=>{e.currentTarget.setAttribute('aria-checked',String(e.currentTarget.checked))});
       b.querySelector('.cookie-setting:last-child').addEventListener('click',e=>{if(e.target!==b.querySelector('[data-cookie-optional]'))b.querySelector('[data-cookie-optional]').click()});
@@ -33,7 +41,15 @@
     if(optional){optional.checked=!!prefs?.optional;optional.setAttribute('aria-label','Autoriser les cookies optionnels');}
     const save=b.querySelector('[data-cookie="save"]');if(save)save.style.display=settings?'inline-flex':'none';
     b.classList.add('show');
-    if(settings)b.querySelector('.cookie-settings').classList.add('show');
+    if(settings){
+      b.querySelector('.cookie-settings').classList.add('show');
+      b.querySelector('[data-cookie="save"]').style.display='inline-flex';
+      b.querySelector('[data-cookie="custom"]').textContent='Masquer les options';
+    }else{
+      b.querySelector('.cookie-settings').classList.remove('show');
+      b.querySelector('[data-cookie="save"]').style.display='none';
+      b.querySelector('[data-cookie="custom"]').textContent='Personnaliser';
+    }
   }
   window.PACookieSettings=()=>showCookieBanner(true);
   function boot(){addFooterLinks();if(!getCookie(COOKIE_NAME))showCookieBanner(false)}
