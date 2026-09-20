@@ -22,12 +22,15 @@
       document.body.appendChild(b);
       b.querySelector('[data-cookie="accept"]').onclick=()=>{savePrefs('accepted',true);b.classList.remove('show')};
       b.querySelector('[data-cookie="refuse"]').onclick=()=>{savePrefs('refused',false);b.classList.remove('show')};
-      b.querySelector('[data-cookie="custom"]').onclick=()=>{b.querySelector('.cookie-settings').classList.add('show');b.querySelector('[data-cookie="save"]').focus()};
+      b.querySelector('[data-cookie="custom"]').onclick=()=>{b.querySelector('.cookie-settings').classList.add('show');b.querySelector('[data-cookie="save"]').style.display='inline-flex';b.querySelector('[data-cookie="save"]').focus()};
       b.querySelector('[data-cookie="save"]').onclick=()=>{const optional=!!b.querySelector('[data-cookie-optional]').checked;savePrefs('custom',optional);b.classList.remove('show')};
+      b.querySelector('[data-cookie-optional]').addEventListener('change',e=>{e.currentTarget.setAttribute('aria-checked',String(e.currentTarget.checked))});
+      b.querySelector('.cookie-setting:last-child').addEventListener('click',e=>{if(e.target!==b.querySelector('[data-cookie-optional]'))b.querySelector('[data-cookie-optional]').click()});
     }
     const prefs=readPrefs();
     const optional=b.querySelector('[data-cookie-optional]');
-    if(optional)optional.checked=!!prefs?.optional;
+    if(optional){optional.checked=!!prefs?.optional;optional.setAttribute('aria-label','Autoriser les cookies optionnels');}
+    const save=b.querySelector('[data-cookie="save"]');if(save)save.style.display=settings?'inline-flex':'none';
     b.classList.add('show');
     if(settings)b.querySelector('.cookie-settings').classList.add('show');
   }
