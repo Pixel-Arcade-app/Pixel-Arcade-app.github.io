@@ -35,6 +35,7 @@
     b.classList.add('show');
     if(settings)b.querySelector('.cookie-settings').classList.add('show');
   }
+  window.PACookieSettings=()=>showCookieBanner(true);
   function boot(){addFooterLinks();if(!getCookie(COOKIE_NAME))showCookieBanner(false)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
