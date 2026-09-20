@@ -131,15 +131,26 @@
   canvas.addEventListener('touchstart',e=>{if(!running||paused)return;const t=e.touches[0];if(t){const r=canvas.getBoundingClientRect();pointerTarget=Math.max(0,Math.min(W,(t.clientX-r.left)*W/r.width))}},{passive:true});
   canvas.addEventListener('touchmove',e=>{if(!running||paused)return;const t=e.touches[0];if(t){const r=canvas.getBoundingClientRect();pointerTarget=Math.max(0,Math.min(W,(t.clientX-r.left)*W/r.width))}},{passive:true});
   canvas.addEventListener('touchend',()=>pointerTarget=null,{passive:true});
-  document.addEventListener('keydown',e=>{
+  function handleKeyDown(e){
     const k=e.key,code=e.code;
     keys[k]=true;keys[code]=true;
-    if(['ArrowLeft','ArrowRight','a','A','d','D','Shift',' '].includes(k)||code==='Space'||code==='ShiftLeft'||code==='ShiftRight')e.preventDefault();
-    if((k==='Shift'||code==='ShiftLeft'||code==='ShiftRight')&&!e.repeat)dashUse();
-    if((code==='Space'||k===' ')&&!e.repeat)pause();
-  },{passive:false});
-  document.addEventListener('keyup',e=>{keys[e.key]=false;keys[e.code]=false});
-  $('pause').onclick=()=>pause(); $('resume').onclick=()=>{if(paused)pause()}; $('dashBtn').onclick=e=>{e.preventDefault();dashUse();}; $('start').onclick=start; $('again').onclick=start; $('againAuto').onclick=start; $('restart').onclick=reset;
+    const moveKey=['ArrowLeft','ArrowRight','KeyA','KeyD'].includes(code)||['a','A','d','D'].includes(k);
+    if(moveKey && running && !paused) pointerTarget=null;
+    if(['ArrowLeft','ArrowRight','a','A','d','D','Shift',' '].includes(k)||code==='Space'||code==='ShiftLeft'||code==='ShiftRight') e.preventDefault();
+    if((k==='Shift'||code==='ShiftLeft'||code==='ShiftRight')&&!e.repeat){e.stopPropagation();dashUse();}
+    if((code==='Space'||k===' ')&&!e.repeat){e.stopPropagation();pause();}
+  }
+  function handleKeyUp(e){keys[e.key]=false;keys[e.code]=false}
+  window.addEventListener('keydown',handleKeyDown,{capture:true,passive:false});
+  window.addEventListener('keyup',handleKeyUp,{capture:true,passive:false});
+  $('pause').onclick=e=>{e.preventDefault();pause()};
+  $('resume').onclick=e=>{e.preventDefault();if(paused)pause()};
+  const dashButton=$('dashBtn');
+  if(dashButton){
+    dashButton.onclick=null;
+    dashButton.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();dashUse();},{capture:true});
+    dashButton.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();dashUse();},{capture:true});
+  } $('start').onclick=start; $('again').onclick=start; $('againAuto').onclick=start; $('restart').onclick=reset;
   document.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{difficulty=b.dataset.diff;document.querySelectorAll('[data-diff]').forEach(x=>x.classList.toggle('active',x===b));reset()});
   $('save').onclick=async()=>{const p=($('pseudo').value||'').trim();const v=Math.floor(score);try{await window.PAAuth?.saveAnonymousScore?.('dodge',v,1,p||'Joueur')}catch{}$('message').textContent='✓ Score enregistré.';loadRanking()};
   $('fullscreen').onclick=()=>{try{if(document.fullscreenElement)document.exitFullscreen();else $('gamePanel')?.requestFullscreen?.()}catch{}};
