@@ -1,1 +1,1 @@
-(()=>{if(document.body?.dataset.game!=='dodge')return;const s=document.createElement('script');s.src='dodge-final-v3.js?v=3.4';s.async=false;document.body.appendChild(s)})();
+(()=>{if(document.body?.dataset.game!=='dodge')return;if(window.__PA_DODGE_LOADER__)return;window.__PA_DODGE_LOADER__=true;document.querySelectorAll('script[src*="dodge-final-v3.js"]').forEach(x=>x.remove());const s=document.createElement('script');s.src='dodge-final-v3.js?v=3.5';s.async=false;document.body.appendChild(s)})();
